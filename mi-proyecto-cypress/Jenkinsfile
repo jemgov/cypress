@@ -9,7 +9,7 @@ pipeline {
   stages {
     stage('Instalar dependencias') {
       steps {
-        dir('cypress/mi-proyecto-cypress') {
+        dir('mi-proyecto-cypress') {
           bat '''
           REM Instalando dependencias
           npm install
@@ -19,7 +19,7 @@ pipeline {
     }
     stage('Ejecutar pruebas') {
       steps {
-        dir('cypress/mi-proyecto-cypress') {
+        dir('mi-proyecto-cypress') {
           bat """
           REM Ejecutando pruebas desde parámetro
           npx cypress run --spec "${params.TEST_SPEC}"
