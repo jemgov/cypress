@@ -1,9 +1,6 @@
-name: Run Cypress Test
+name: Cypress Test
 
-on:
-  push:
-    branches: [ main ]
-  pull_request:
+on: [push, pull_request]
 
 jobs:
   cypress-run:
@@ -13,11 +10,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
       - name: Install dependencies
         run: npm ci
+        working-directory: ./cypress/mi-proyecto-cypress
 
-      - name: Run specific Cypress test
+      - name: Run Cypress tests
         uses: cypress-io/github-action@v6.5.0
         with:
-          start: npx cypress run --spec "mi-proyecto-cypress\1-getting-started\PRUEBAS\login.cy.js"
-          record: false
+          working-directory: ./cypress/mi-proyecto-cypress
+          command: npx cypress run --spec "cypress/e2e/login.cy.js"
