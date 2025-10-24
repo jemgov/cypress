@@ -38,8 +38,8 @@ pipeline {
         dir('mi-proyecto-cypress') {
           powershell '''
           Write-Host "=== Generando reporte HTML ==="
-          $json = npx mochawesome-merge cypress/report/*.json
-          [System.IO.File]::WriteAllText("mochawesome.json", $json, [System.Text.Encoding]::UTF8)
+          $npx = "npx mochawesome-merge cypress/report/*.json"
+          Invoke-Expression $npx | Set-Content -Encoding utf8NoBOM mochawesome.json
           npx marge mochawesome.json --reportDir cypress/report --inline
           Write-Host "=== Reporte generado en cypress/report/index.html ==="
           '''
