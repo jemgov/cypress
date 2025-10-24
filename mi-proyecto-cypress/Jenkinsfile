@@ -39,22 +39,26 @@ pipeline {
           powershell '''
           Write-Host "=== Generando reporte HTML ==="
 
-          $jsonFiles = Get-ChildItem -Path cypress/report -Filter *.json
-          if ($jsonFiles.Count -eq 0) {
-            Write-Host "⚠️ No se encontraron archivos JSON para fusionar. Se omite la generación del reporte."
-            exit 0
+          try {
+            $jsonFiles = Get-ChildItem -Path cypress/report -Filter *.json
+            if ($jsonFiles.Count -eq 0) {
+              Write-Host "⚠️ No se encontraron archivos JSON para fusionar. Se omite la generación del reporte."
+              exit 0
+            }
+
+            $json = npx mochawesome-merge cypress/report/*.json
+            if (-not $json -or $json.Contains('"results": []')) {
+              Write-Host "⚠️ El contenido fusionado está vacío. No se generará el HTML."
+              exit 0
+            }
+
+            $json | Set-Content -Encoding utf8NoBOM mochawesome.json
+            npx marge mochawesome.json --reportDir cypress/report --inline
+            Write-Host "✅ Reporte generado en cypress/report/index.html"
+          } catch {
+            Write-Host "⚠️ Se produjo un error durante la generación del reporte, pero no se detendrá el pipeline."
           }
 
-          $json = npx mochawesome-merge cypress/report/*.json
-          if (-not $json -or $json.Contains('"results": []')) {
-            Write-Host "⚠️ El contenido fusionado está vacío. No se generará el HTML."
-            exit 0
-          }
-
-          $json | Set-Content -Encoding utf8NoBOM mochawesome.json
-          npx marge mochawesome.json --reportDir cypress/report --inline
-
-          Write-Host "✅ Reporte generado en cypress/report/index.html"
           exit 0
           '''
         }
@@ -64,7 +68,11 @@ pipeline {
   post {
     always {
       echo '=== Pipeline finalizado ==='
+
+      // Publicar todos los recursos del reporte como artefactos (HTML, videos, imágenes, etc.)
       archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/**', fingerprint: true
+
+      // Mostrar el reporte HTML directamente en Jenkins
       publishHTML([
         reportDir: 'mi-proyecto-cypress/cypress/report',
         reportFiles: 'index.html',
