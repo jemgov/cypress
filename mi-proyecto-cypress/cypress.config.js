@@ -4,7 +4,7 @@ module.exports = defineConfig({
   e2e: {
     // Desactiva support file
     supportFile: false,
-
+    specPattern: "e2e/1-getting-started/PRUEBAS/*.cy.js", // <- esto es clave
     // Configuración de eventos de Node
     setupNodeEvents(on, config) {
       require('cypress-mochawesome-reporter/plugin')(on);
