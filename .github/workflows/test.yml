@@ -36,4 +36,4 @@ jobs:
         uses: cypress-io/github-action@v6.5.0
         with:
           working-directory: mi-proyecto-cypress
-          command: npx cypress run --spec cypress/e2e/1-getting-started/PRUEBAS/login.cy.js
+          command: npx cypress run --spec e2e/1-getting-started/PRUEBAS/login.cy.js
