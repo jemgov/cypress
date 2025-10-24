@@ -26,7 +26,7 @@ jobs:
         working-directory: mi-proyecto-cypress
         shell: powershell
 
-      # 4️⃣ Verificar archivos de prueba
+      # 4️⃣ Listar archivos de prueba
       - name: List e2e test files
         run: dir mi-proyecto-cypress\e2e\1-getting-started\PRUEBAS
         shell: powershell
@@ -37,14 +37,21 @@ jobs:
         working-directory: mi-proyecto-cypress
         shell: powershell
 
-      # 6️⃣ Subir screenshots si existen
+      # 6️⃣ Subir reporte HTML de Mochawesome (siempre existe)
+      - name: Upload Cypress HTML report
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-report
+          path: mi-proyecto-cypress\cypress\report\**\*
+
+      # 7️⃣ Subir screenshots si existen
       - name: Upload Cypress screenshots
         uses: actions/upload-artifact@v4
         with:
           name: cypress-screenshots
           path: mi-proyecto-cypress\cypress\screenshots\**\*.png
 
-      # 7️⃣ Subir videos si existen
+      # 8️⃣ Subir videos si existen
       - name: Upload Cypress videos
         uses: actions/upload-artifact@v4
         with:
