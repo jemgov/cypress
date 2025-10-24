@@ -34,9 +34,9 @@ jobs:
         run: npm ci
         working-directory: mi-proyecto-cypress
 
-      # 5️⃣ Depuración: listar todos los tests
-      - name: List e2e test files
-        run: ls -R mi-proyecto-cypress/e2e/1-getting-started/PRUEBAS
+      # 5️⃣ Depuración: confirmar que el test existe
+      - name: Verify test file exists
+        run: ls -l mi-proyecto-cypress/e2e/1-getting-started/PRUEBAS
 
       # 6️⃣ Ejecutar solo el test específico
       - name: Run single Cypress test
