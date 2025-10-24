@@ -26,7 +26,7 @@ pipeline {
           dir('mi-proyecto-cypress') {
             powershell """
             Write-Host '=== Ejecutando pruebas Cypress ==='
-            npx cypress run --spec '${params.TEST_SPEC}'
+            npx cypress run --spec "${params.TEST_SPEC}"
             Write-Host '=== Cypress finalizado ==='
             """
           }
@@ -38,9 +38,8 @@ pipeline {
         dir('mi-proyecto-cypress') {
           powershell """
           Write-Host '=== Generando reporte HTML ==='
-          # Asegúrate de que mochawesome esté instalado y configurado en tu proyecto
-          # Este paso puede variar según tu configuración de reporter
-          Write-Host 'Reporte generado en cypress/report/index.html'
+          npm run report
+          Write-Host '=== Reporte generado en cypress/report/index.html ==='
           """
         }
       }
