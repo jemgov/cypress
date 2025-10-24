@@ -21,6 +21,6 @@ module.exports = defineConfig({
     screenshotOnRunFailure: true,
     screenshotsFolder: "cypress/screenshots",
     video: true,
-    videosFolder: "cypress/video"
+    videosFolder: "cypress/report/videos"
   }
 });
