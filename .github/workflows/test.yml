@@ -1,8 +1,8 @@
-name: Ejecutar test único en Windows
+name: Cypress Single Test on Windows
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
 
 jobs:
@@ -10,36 +10,53 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - name: Clonar el repositorio
+      # 1️⃣ Clonar el repositorio
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Configurar Node.js
+      # 2️⃣ Configurar Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Instalar dependencias
+      # 3️⃣ Instalar dependencias
+      - name: Install dependencies
         run: npm ci
         working-directory: mi-proyecto-cypress
         shell: powershell
 
-      - name: Verificar archivos de prueba
+      # 4️⃣ Crear carpetas para Cypress
+      - name: Create Cypress folders
+        run: |
+          New-Item -ItemType Directory -Force mi-proyecto-cypress\cypress\screenshots
+          New-Item -ItemType Directory -Force mi-proyecto-cypress\cypress\videos
+        shell: powershell
+
+      # 5️⃣ Verificar archivos de prueba
+      - name: List e2e test files
         run: dir mi-proyecto-cypress\e2e\1-getting-started\PRUEBAS
         shell: powershell
 
-      - name: Ejecutar test de Cypress
+      # 6️⃣ Ejecutar el test único
+      - name: Run Cypress test
         run: npx cypress run --spec e2e/1-getting-started/PRUEBAS/login.cy.js
         working-directory: mi-proyecto-cypress
         shell: powershell
 
-      - name: Subir capturas de pantalla
+      # 7️⃣ Subir screenshots como artifact
+      - name: Upload Cypress screenshots
+        if: success() || failure()
         uses: actions/upload-artifact@v4
         with:
           name: cypress-screenshots
           path: mi-proyecto-cypress\cypress\screenshots
 
-      - name: Subir videos
+      # 8️⃣ Subir videos como artifact
+      - name: Upload Cypress videos
+        if: success() || failure()
         uses: actions/upload-artifact@v4
         with:
           name: cypress-videos
           path: mi-proyecto-cypress\cypress\videos
+
