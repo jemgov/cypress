@@ -46,12 +46,8 @@ pipeline {
           }
 
           $json = npx mochawesome-merge cypress/report/*.json
-          if (-not $json -or $json -match "Unexpected token" -or $json -match '"results"\s*:\s*
-
-\[\s*\]
-
-') {
-            Write-Host "⚠️ El contenido fusionado está vacío o malformado. No se generará el HTML."
+          if (-not $json -or $json.Contains('"results": []')) {
+            Write-Host "⚠️ El contenido fusionado está vacío. No se generará el HTML."
             exit 0
           }
 
