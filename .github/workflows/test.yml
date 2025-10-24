@@ -1,4 +1,4 @@
-name: Cypress Single Test
+name: Cypress Single Test Debug
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
   pull_request:
 
 jobs:
-  cypress-run:
+  cypress-debug:
     runs-on: ubuntu-latest
 
     steps:
@@ -20,25 +20,24 @@ jobs:
         with:
           node-version: 20
 
-      # 3️⃣ Caché de node_modules
-      - name: Cache node modules
-        uses: actions/cache@v3
-        with:
-          path: mi-proyecto-cypress/node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('mi-proyecto-cypress/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+      # 3️⃣ Depuración: listar la raíz del repo
+      - name: List repo root
+        run: ls -lR
 
-      # 4️⃣ Instalar dependencias
+      # 4️⃣ Depuración: listar carpeta mi-proyecto-cypress
+      - name: List mi-proyecto-cypress
+        run: ls -lR mi-proyecto-cypress
+
+      # 5️⃣ Depuración: listar la carpeta e2e
+      - name: List e2e test files
+        run: ls -lR mi-proyecto-cypress/e2e
+
+      # 6️⃣ Instalar dependencias
       - name: Install dependencies
         run: npm ci
         working-directory: mi-proyecto-cypress
 
-      # 5️⃣ Depuración: confirmar que el test existe
-      - name: Verify test file exists
-        run: ls -l mi-proyecto-cypress/e2e/1-getting-started/PRUEBAS
-
-      # 6️⃣ Ejecutar solo el test específico
+      # 7️⃣ Ejecutar Cypress test (solo después de depuración)
       - name: Run single Cypress test
         uses: cypress-io/github-action@v6.5.0
         with:
