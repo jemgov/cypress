@@ -1,8 +1,8 @@
-name: Cypress Single Test on Windows
+name: Ejecutar test único en Windows
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
 
 jobs:
@@ -10,42 +10,36 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      # 1️⃣ Clonar el repositorio
-      - name: Checkout repository
+      - name: Clonar el repositorio
         uses: actions/checkout@v4
 
-      # 2️⃣ Configurar Node.js
-      - name: Setup Node.js
+      - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      # 3️⃣ Instalar dependencias
-      - name: Install dependencies
+      - name: Instalar dependencias
         run: npm ci
         working-directory: mi-proyecto-cypress
         shell: powershell
 
-      # 4️⃣ Depuración: listar los tests
-      - name: List e2e test files
+      - name: Verificar archivos de prueba
         run: dir mi-proyecto-cypress\e2e\1-getting-started\PRUEBAS
         shell: powershell
 
-      # 5️⃣ Ejecutar solo el test específico
-      - name: Run Cypress test
+      - name: Ejecutar test de Cypress
         run: npx cypress run --spec e2e/1-getting-started/PRUEBAS/login.cy.js
         working-directory: mi-proyecto-cypress
         shell: powershell
 
-      # 6️⃣ Subir screenshots y videos como artifacts
-      - name: Upload Cypress screenshots
-        uses: actions/upload-artifact@v3
+      - name: Subir capturas de pantalla
+        uses: actions/upload-artifact@v4
         with:
           name: cypress-screenshots
           path: mi-proyecto-cypress\cypress\screenshots
 
-      - name: Upload Cypress videos
-        uses: actions/upload-artifact@v3
+      - name: Subir videos
+        uses: actions/upload-artifact@v4
         with:
           name: cypress-videos
           path: mi-proyecto-cypress\cypress\videos
