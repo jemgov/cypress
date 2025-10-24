@@ -35,5 +35,5 @@ jobs:
       - name: Run Cypress tests
         uses: cypress-io/github-action@v6.5.0
         with:
-          working-directory: cypress/mi-proyecto-cypress
+          working-directory: mi-proyecto-cypress
           command: npx cypress run --spec "e2e/1-getting-started/PRUEBAS/login.cy.js"
