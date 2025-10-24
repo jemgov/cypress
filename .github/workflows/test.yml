@@ -26,37 +26,27 @@ jobs:
         working-directory: mi-proyecto-cypress
         shell: powershell
 
-      # 4️⃣ Crear carpetas para Cypress
-      - name: Create Cypress folders
-        run: |
-          New-Item -ItemType Directory -Force mi-proyecto-cypress\cypress\screenshots
-          New-Item -ItemType Directory -Force mi-proyecto-cypress\cypress\videos
-        shell: powershell
-
-      # 5️⃣ Verificar archivos de prueba
+      # 4️⃣ Verificar archivos de prueba
       - name: List e2e test files
         run: dir mi-proyecto-cypress\e2e\1-getting-started\PRUEBAS
         shell: powershell
 
-      # 6️⃣ Ejecutar el test único
+      # 5️⃣ Ejecutar el test único
       - name: Run Cypress test
         run: npx cypress run --spec e2e/1-getting-started/PRUEBAS/login.cy.js
         working-directory: mi-proyecto-cypress
         shell: powershell
 
-      # 7️⃣ Subir screenshots como artifact
+      # 6️⃣ Subir screenshots si existen
       - name: Upload Cypress screenshots
-        if: success() || failure()
         uses: actions/upload-artifact@v4
         with:
           name: cypress-screenshots
-          path: mi-proyecto-cypress\cypress\screenshots
+          path: mi-proyecto-cypress\cypress\screenshots\**\*.png
 
-      # 8️⃣ Subir videos como artifact
+      # 7️⃣ Subir videos si existen
       - name: Upload Cypress videos
-        if: success() || failure()
         uses: actions/upload-artifact@v4
         with:
           name: cypress-videos
-          path: mi-proyecto-cypress\cypress\videos
-
+          path: mi-proyecto-cypress\cypress\videos\**\*.mp4
