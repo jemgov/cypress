@@ -11,11 +11,11 @@ pipeline {
       steps {
         timeout(time: 5, unit: 'MINUTES') {
           dir('mi-proyecto-cypress') {
-            powershell """
-            Write-Host '=== Iniciando instalación de dependencias ==='
+            powershell '''
+            Write-Host "=== Iniciando instalación de dependencias ==="
             npm install
-            Write-Host '=== npm install finalizado ==='
-            """
+            Write-Host "=== npm install finalizado ==="
+            '''
           }
         }
       }
@@ -24,11 +24,11 @@ pipeline {
       steps {
         timeout(time: 10, unit: 'MINUTES') {
           dir('mi-proyecto-cypress') {
-            powershell """
-            Write-Host '=== Ejecutando pruebas Cypress ==='
-            npx cypress run --spec "${params.TEST_SPEC}"
-            Write-Host '=== Cypress finalizado ==='
-            """
+            powershell '''
+            Write-Host "=== Ejecutando pruebas Cypress ==="
+            npx cypress run --spec "$env:TEST_SPEC"
+            Write-Host "=== Cypress finalizado ==="
+            '''
           }
         }
       }
@@ -36,13 +36,13 @@ pipeline {
     stage('Generar reporte') {
       steps {
         dir('mi-proyecto-cypress') {
-          powershell """
-          Write-Host '=== Generando reporte HTML ==='
+          powershell '''
+          Write-Host "=== Generando reporte HTML ==="
           $json = npx mochawesome-merge cypress/report/*.json
           [System.IO.File]::WriteAllText("mochawesome.json", $json, [System.Text.Encoding]::UTF8)
           npx marge mochawesome.json --reportDir cypress/report --inline
-          Write-Host '=== Reporte generado en cypress/report/index.html ==='
-          """
+          Write-Host "=== Reporte generado en cypress/report/index.html ==="
+          '''
         }
       }
     }
@@ -51,6 +51,14 @@ pipeline {
     always {
       echo '=== Pipeline finalizado ==='
       archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/index.html', fingerprint: true
+      publishHTML([
+        reportDir: 'mi-proyecto-cypress/cypress/report',
+        reportFiles: 'index.html',
+        reportName: 'Reporte Cypress',
+        keepAll: true,
+        alwaysLinkToLastBuild: true,
+        allowMissing: false
+      ])
     }
     success {
       echo '✅ Todos los pasos se completaron correctamente.'
