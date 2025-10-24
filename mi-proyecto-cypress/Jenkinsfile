@@ -4,21 +4,57 @@ pipeline {
     nodejs "NodeJS 25"
   }
   parameters {
-    string(name: 'TEST_SPEC', defaultValue: 'e2e/login.cy.js', description: 'Ruta del test a ejecutar')
+    string(name: 'TEST_SPEC', defaultValue: 'e2e/1-getting-started/PRUEBAS/login.cy.js', description: 'Ruta del test o tests a ejecutar')
   }
   stages {
-    stage('Probar Cypress') {
+    stage('Instalar dependencias') {
+      steps {
+        timeout(time: 5, unit: 'MINUTES') {
+          dir('mi-proyecto-cypress') {
+            powershell """
+            Write-Host '=== Iniciando instalación de dependencias ==='
+            npm install
+            Write-Host '=== npm install finalizado ==='
+            """
+          }
+        }
+      }
+    }
+    stage('Ejecutar pruebas') {
       steps {
         timeout(time: 10, unit: 'MINUTES') {
           dir('mi-proyecto-cypress') {
             powershell """
-            Write-Host '=== Ejecutando Cypress ==='
+            Write-Host '=== Ejecutando pruebas Cypress ==='
             npx cypress run --spec '${params.TEST_SPEC}'
             Write-Host '=== Cypress finalizado ==='
             """
           }
         }
       }
+    }
+    stage('Generar reporte') {
+      steps {
+        dir('mi-proyecto-cypress') {
+          powershell """
+          Write-Host '=== Generando reporte HTML ==='
+          # Asegúrate de que mochawesome esté instalado y configurado en tu proyecto
+          # Este paso puede variar según tu configuración de reporter
+          Write-Host 'Reporte generado en cypress/report/index.html'
+          """
+        }
+      }
+    }
+  }
+  post {
+    always {
+      echo '=== Pipeline finalizado ==='
+    }
+    success {
+      echo '✅ Todos los pasos se completaron correctamente.'
+    }
+    failure {
+      echo '❌ El pipeline falló. Revisa los logs para más detalles.'
     }
   }
 }
