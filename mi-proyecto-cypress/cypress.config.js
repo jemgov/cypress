@@ -4,8 +4,9 @@ module.exports = defineConfig({
   e2e: {
     setupNodeEvents(on, config) {
       require('cypress-mochawesome-reporter/plugin')(on);
-	  supportFile: false,           // ⚡ Desactiva support file
+	  supportFile: false,           // Desactiva support file
       // implement node event listeners here
+    }
     },
 
     //reportes con mocha
