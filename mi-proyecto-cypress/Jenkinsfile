@@ -39,28 +39,23 @@ pipeline {
           powershell '''
           Write-Host "=== Generando reporte HTML ==="
 
-          # Verificar si hay archivos JSON
           $jsonFiles = Get-ChildItem -Path cypress/report -Filter *.json
           if ($jsonFiles.Count -eq 0) {
             Write-Host "⚠️ No se encontraron archivos JSON para fusionar. Se omite la generación del reporte."
             exit 0
           }
 
-          # Fusionar y validar contenido
           $json = npx mochawesome-merge cypress/report/*.json
-          if (-not $json -or $json -match "Unexpected token" -or $json -match '"results":\\s*\
+          if (-not $json -or $json -match "Unexpected token" -or $json -match '"results"\s*:\s*
 
-\[\\s*\\]
+\[\s*\]
 
 ') {
             Write-Host "⚠️ El contenido fusionado está vacío o malformado. No se generará el HTML."
             exit 0
           }
 
-          # Guardar JSON sin BOM
           $json | Set-Content -Encoding utf8NoBOM mochawesome.json
-
-          # Generar HTML con recursos embebidos
           npx marge mochawesome.json --reportDir cypress/report --inline
 
           Write-Host "✅ Reporte generado en cypress/report/index.html"
@@ -73,11 +68,7 @@ pipeline {
   post {
     always {
       echo '=== Pipeline finalizado ==='
-
-      // Publicar todos los recursos del reporte como artefactos (HTML, videos, imágenes, etc.)
       archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/**', fingerprint: true
-
-      // Mostrar el reporte HTML directamente en Jenkins
       publishHTML([
         reportDir: 'mi-proyecto-cypress/cypress/report',
         reportFiles: 'index.html',
