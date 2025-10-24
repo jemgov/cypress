@@ -9,23 +9,29 @@ pipeline {
   stages {
     stage('Instalar dependencias') {
       steps {
-        dir('mi-proyecto-cypress') {
-          bat """
-          echo === Iniciando instalación de dependencias ===
-          npm install
-          echo === npm install finalizado ===
-          """
+        timeout(time: 5, unit: 'MINUTES') {
+          dir('mi-proyecto-cypress') {
+            bat """
+            chcp 65001
+            echo === Iniciando instalación de dependencias ===
+            call npm install
+            echo === npm install finalizado ===
+            """
+          }
         }
       }
     }
     stage('Ejecutar pruebas') {
       steps {
-        dir('mi-proyecto-cypress') {
-          bat """
-          echo === Ejecutando pruebas Cypress ===
-          npx cypress run --spec "${params.TEST_SPEC}"
-          echo === Pruebas finalizadas ===
-          """
+        timeout(time: 10, unit: 'MINUTES') {
+          dir('mi-proyecto-cypress') {
+            bat """
+            chcp 65001
+            echo === Ejecutando pruebas Cypress ===
+            call npx cypress run --spec "${params.TEST_SPEC}"
+            echo === Pruebas finalizadas ===
+            """
+          }
         }
       }
     }
