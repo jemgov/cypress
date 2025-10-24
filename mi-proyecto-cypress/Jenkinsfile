@@ -1,14 +1,19 @@
 pipeline {
   agent any
+  tools {
+    nodejs "NodeJS 25"
+  }
   stages {
-    stage('Diagnóstico') {
+    stage('Probar npm install') {
       steps {
-        dir('mi-proyecto-cypress') {
-          powershell """
-          Write-Host '=== Diagnóstico: Inicio ==='
-          Get-ChildItem
-          Write-Host '=== Diagnóstico: Fin ==='
-          """
+        timeout(time: 5, unit: 'MINUTES') {
+          dir('mi-proyecto-cypress') {
+            powershell """
+            Write-Host '=== Iniciando npm install ==='
+            npm install
+            Write-Host '=== npm install finalizado ==='
+            """
+          }
         }
       }
     }
