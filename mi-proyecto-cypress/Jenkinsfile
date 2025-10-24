@@ -1,37 +1,14 @@
 pipeline {
   agent any
-  tools {
-    nodejs "NodeJS 25"
-  }
-  parameters {
-    string(name: 'TEST_SPEC', defaultValue: 'e2e/1-getting-started/PRUEBAS/login.cy.js', description: 'Ruta del test o tests a ejecutar')
-  }
   stages {
-    stage('Instalar dependencias') {
+    stage('Diagnóstico') {
       steps {
-        timeout(time: 5, unit: 'MINUTES') {
-          dir('mi-proyecto-cypress') {
-            bat """
-            chcp 65001
-            echo === Iniciando instalación de dependencias ===
-            call npm install
-            echo === npm install finalizado ===
-            """
-          }
-        }
-      }
-    }
-    stage('Ejecutar pruebas') {
-      steps {
-        timeout(time: 10, unit: 'MINUTES') {
-          dir('mi-proyecto-cypress') {
-            bat """
-            chcp 65001
-            echo === Ejecutando pruebas Cypress ===
-            call npx cypress run --spec "${params.TEST_SPEC}"
-            echo === Pruebas finalizadas ===
-            """
-          }
+        dir('mi-proyecto-cypress') {
+          powershell """
+          Write-Host '=== Diagnóstico: Inicio ==='
+          Get-ChildItem
+          Write-Host '=== Diagnóstico: Fin ==='
+          """
         }
       }
     }
