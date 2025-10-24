@@ -51,14 +51,6 @@ pipeline {
     always {
       echo '=== Pipeline finalizado ==='
       archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/index.html', fingerprint: true
-      publishHTML([
-        reportDir: 'mi-proyecto-cypress/cypress/report',
-        reportFiles: 'index.html',
-        reportName: 'Reporte Cypress',
-        keepAll: true,
-        alwaysLinkToLastBuild: true,
-        allowMissing: false
-      ])
     }
     success {
       echo '✅ Todos los pasos se completaron correctamente.'
