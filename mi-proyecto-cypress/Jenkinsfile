@@ -38,9 +38,19 @@ pipeline {
         dir('mi-proyecto-cypress') {
           powershell '''
           Write-Host "=== Generando reporte HTML ==="
-          $npx = "npx mochawesome-merge cypress/report/*.json"
-          Invoke-Expression $npx | Set-Content -Encoding utf8NoBOM mochawesome.json
+
+          # Ejecutar mochawesome-merge y guardar salida sin BOM
+          $json = npx mochawesome-merge cypress/report/*.json
+          if (-not $json -or $json -match "Unexpected token") {
+            Write-Host "❌ Error al fusionar los archivos JSON. El contenido no es válido."
+            exit 0
+          }
+
+          $json | Set-Content -Encoding utf8NoBOM mochawesome.json
+
+          # Generar reporte HTML
           npx marge mochawesome.json --reportDir cypress/report --inline
+
           Write-Host "=== Reporte generado en cypress/report/index.html ==="
           '''
         }
