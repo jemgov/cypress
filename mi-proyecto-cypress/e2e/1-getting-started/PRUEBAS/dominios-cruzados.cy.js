@@ -1,14 +1,18 @@
-describe("Manejo de dominios cruzados",()=>{
-    it("Interactuar con dominios diferentes",()=>{
-        cy.visit("https://example.com")     //dominio principal
-        cy.origin("https://the-internet.herokuapp.com",()=>{    //dominio secundario
-            cy.visit("https://the-internet.herokuapp.com")
-            cy.visit("https://validaciones.rodrigovillanueva.com.mx/")
-            //cy.get("h1").should("contain.text","Welcome to the-internet")
-        })
-    })
-})
+describe("Manejo de múltiples dominios", () => {
+  it("Interactuar con varios dominios", () => {
+    cy.visit("https://example.com")   // Dominio principal
 
+    cy.origin("https://the-internet.herokuapp.com", () => {
+      cy.visit("/")
+      cy.get("h1").should("contain.text", "Welcome to the-internet")
+    })
+
+    cy.origin("https://validaciones.rodrigovillanueva.com.mx", () => {
+      cy.visit("/")
+      cy.get("body").should("exist")
+    })
+  })
+})
 
 
 //Dominios cruzados:
