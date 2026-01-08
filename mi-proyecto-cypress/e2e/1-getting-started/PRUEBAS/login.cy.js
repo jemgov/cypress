@@ -1,4 +1,4 @@
-it('Login completo con verificación de sesión', () => {
+/*it('Login completo con verificación de sesión', () => {
   cy.request({
     method: 'POST',
     url: 'https://practicetestautomation.com/practice-test-login/',
@@ -25,4 +25,15 @@ it('Login completo con verificación de sesión', () => {
     cy.url().should('include', '/logged-in-successfully/')
     cy.get('.post-title').should('have.text', 'Logged In Successfully')
   })
+})*/
+
+it('Login correcto usando la interfaz', () => {
+  cy.visit('https://practicetestautomation.com/practice-test-login/')
+
+  cy.get('input[name="username"], #username').type('student')
+  cy.get('input[name="password"], #password').type('Password123')
+  cy.contains('button, input[type="submit"]', 'Submit').click()
+
+  cy.url().should('include', '/logged-in-successfully/')
+  cy.contains('.post-title, h1', 'Logged In Successfully').should('exist')
 })
