@@ -5,7 +5,7 @@ it('Login completo con verificación de sesión', () => {
     form: true,
     body: {
       Email1: 'student',
-      Password: 'Password123!',
+      Password: 'Password123',
       send: '1'
     }
   }).then((resp) => {
