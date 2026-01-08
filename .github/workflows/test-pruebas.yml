@@ -2,7 +2,7 @@ name: Test Cypress PRUEBAS
 
 on:
   workflow_dispatch:
-    inputs:           # opcional, para parámetros
+    inputs:
       branch:
         description: 'Branch to run workflow on'
         default: 'main'
@@ -28,25 +28,34 @@ jobs:
         working-directory: mi-proyecto-cypress
         shell: powershell
 
-      # 4️⃣ Verificar archivos de prueba
+      # 4️⃣ Iniciar servidor local para carpeta public
+      - name: Start local server
+        run: |
+          npm install -g http-server
+          http-server ./public -p 8080 &
+          Start-Sleep -Seconds 5
+        working-directory: mi-proyecto-cypress
+        shell: powershell
+
+      # 5️⃣ Verificar archivos de prueba
       - name: List all tests in PRUEBAS
         run: dir mi-proyecto-cypress\e2e\1-getting-started\PRUEBAS
         shell: powershell
 
-      # 5️⃣ Ejecutar todos los tests en PRUEBAS
+      # 6️⃣ Ejecutar todos los tests en PRUEBAS
       - name: Run all Cypress tests in PRUEBAS
         run: npx cypress run --spec e2e/1-getting-started/PRUEBAS/*.cy.js
         working-directory: mi-proyecto-cypress
         shell: powershell
 
-      # 6️⃣ Subir reporte HTML de Mochawesome (siempre existe)
+      # 7️⃣ Subir reporte HTML de Mochawesome
       - name: Upload Cypress HTML report
         uses: actions/upload-artifact@v4
         with:
           name: cypress-report
           path: mi-proyecto-cypress\cypress\report\**\*
 
-      # 7️⃣ Subir screenshots si existen
+      # 8️⃣ Subir screenshots si existen
       - name: Upload Cypress screenshots
         if: always()
         uses: actions/upload-artifact@v4
@@ -54,7 +63,7 @@ jobs:
           name: cypress-screenshots
           path: mi-proyecto-cypress\cypress\screenshots\**\*.png
 
-      # 8️⃣ Subir videos si existen
+      # 9️⃣ Subir videos si existen
       - name: Upload Cypress videos
         if: always()
         uses: actions/upload-artifact@v4
