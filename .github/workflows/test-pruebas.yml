@@ -32,10 +32,11 @@ jobs:
       - name: Start local server
         run: |
           npm install -g http-server
-          http-server ./public -p 8080 &
+          Start-Process "http-server" "-p 8080 ./public"
           Start-Sleep -Seconds 5
         working-directory: mi-proyecto-cypress
         shell: powershell
+
 
       # 5️⃣ Verificar archivos de prueba
       - name: List all tests in PRUEBAS
