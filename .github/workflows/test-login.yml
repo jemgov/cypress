@@ -9,7 +9,7 @@ on:
 
 jobs:
   cypress-run:
-    runs-on: ubuntu-latest   # ← CAMBIO IMPORTANTE
+    runs-on: windows-latest
 
     steps:
       - name: Checkout repository
