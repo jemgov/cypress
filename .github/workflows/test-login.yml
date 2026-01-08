@@ -33,7 +33,7 @@ jobs:
         run: dir mi-proyecto-cypress\e2e\1-getting-started\PRUEBAS
         shell: powershell
 
-      # 5️⃣ Ejecutar todos los tests en PRUEBAS
+      # 5️⃣ Ejecuta el test "login.cy.js"
       - name: Run all Cypress tests in PRUEBAS
         run: npx cypress run --spec e2e/1-getting-started/PRUEBAS/login.cy.js
         working-directory: mi-proyecto-cypress
