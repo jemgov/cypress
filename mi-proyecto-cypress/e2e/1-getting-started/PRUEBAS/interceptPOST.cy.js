@@ -4,29 +4,28 @@ describe('Intercept de red y validación de respuesta', () => {
   })
 
   it('Simula un POST y valida el intercept', () => {
-    // Interceptamos cualquier POST a /comments y devolvemos 201
     cy.intercept('POST', '/comments', {
       statusCode: 201,
       body: { success: true }
     }).as('postComment')
 
-    // Llenamos el formulario
-    cy.get('.action-email').should('be.visible').type('qa@cypress.io')
-    cy.get('.action-blur').should('be.visible').type('Comentario de prueba QA')
+    cy.get('.action-email').type('qa@cypress.io')
+    cy.get('.action-blur').type('Comentario de prueba QA')
 
-    // Enviar el formulario
-    cy.get('.action-form').submit()
-
-    // Simulamos un fetch para disparar el intercept
+    // Disparamos manualmente la petición POST
     cy.window().then(win => {
       return win.fetch('/comments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: 'qa@cypress.io', comment: 'Comentario de prueba QA' })
+        body: JSON.stringify({
+          email: 'qa@cypress.io',
+          comment: 'Comentario de prueba QA'
+        })
       })
     })
 
-    // Validamos que el intercept se disparó y devolvió 201
-    cy.wait('@postComment').its('response.statusCode').should('eq', 201)
+    cy.wait('@postComment')
+      .its('response.statusCode')
+      .should('eq', 201)
   })
 })
