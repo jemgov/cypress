@@ -10,9 +10,7 @@ describe('Menú Commands en Cypress Example', () => {
     cy.get('.dropdown-menu').should('be.visible');
 
     // Cuenta cuántos elementos hay en el menú desplegable
-    cy.get('.dropdown-menu')
-      .find('a')
-      .then((items) => {
+    cy.get('.dropdown-menu').find('a').then((items) => {
         const numeroItems = items.length;
         expect(numeroItems).to.equal(17)        //verifica que el menú contiene 17 elementos
         cy.log(`El menú contiene ${numeroItems} elementos.`);
