@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Simulación de errores con Cypress</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+    }
+    button {
+      margin-right: 1rem;
+      margin-bottom: 1rem;
+    }
+    #spinner {
+      font-weight: bold;
+      color: #007bff;
+      margin-top: 1rem;
+    }
+    #result {
+      margin-top: 1rem;
+      font-size: 1.2rem;
+    }
+  </style>
+</head>
+<body>
+  <h2>Simulador de carga de productos</h2>
+
+  <button id="btn-slow">Cargar con retraso</button>
+  <button id="btn-500">Simular error 500</button>
+  <button id="btn-404">Simular error 404</button>
+  <button id="btn-403">Simular error 403</button>
+  <button id="btn-422">Simular error 422</button>
+  <button id="btn-network">Simular fallo de red</button>
+
+  <div id="spinner" style="display:none;">⏳ Cargando...</div>
+  <div id="result"></div>
+
+  <script>
+    function cargarProductos(endpoint) {
+      document.getElementById('spinner').style.display = 'block'
+      document.getElementById('result').innerText = ''
+
+      fetch(endpoint)
+        .then(res => {
+          if (!res.ok) {
+            if (res.status === 404) throw new Error('NOT_FOUND')
+            if (res.status === 500) throw new Error('SERVER_ERROR')
+            if (res.status === 403) throw new Error('FORBIDDEN')
+            if (res.status === 422) throw new Error('VALIDATION')
+            throw new Error('GENERIC_ERROR')
+          }
+          return res.json()
+        })
+        .then(() => {
+          document.getElementById('spinner').style.display = 'none'
+          document.getElementById('result').innerText = 'Productos cargados correctamente (200)'
+        })
+        .catch((err) => {
+          document.getElementById('spinner').style.display = 'none'
+
+          if (err.message === 'NOT_FOUND') {
+            document.getElementById('result').innerText = 'Producto no encontrado (404)'
+          } else if (err.message === 'SERVER_ERROR') {
+            document.getElementById('result').innerText = 'Error interno del servidor (500)'
+          } else if (err.message === 'FORBIDDEN') {
+            document.getElementById('result').innerText = 'Acceso denegado (403)'
+          } else if (err.message === 'VALIDATION') {
+            document.getElementById('result').innerText = 'Error de validación (422)'
+          } else {
+            document.getElementById('result').innerText = 'Fallo de red o error desconocido'
+          }
+        })
+    }
+
+    document.getElementById('btn-slow').addEventListener('click', () => {
+      cargarProductos('/api/products/slow')
+    })
+
+    document.getElementById('btn-500').addEventListener('click', () => {
+      cargarProductos('/api/products/error500')
+    })
+
+    document.getElementById('btn-404').addEventListener('click', () => {
+      cargarProductos('/api/products/notfound')
+    })
+
+    document.getElementById('btn-403').addEventListener('click', () => {
+      cargarProductos('/api/products/forbidden')
+    })
+
+    document.getElementById('btn-422').addEventListener('click', () => {
+      cargarProductos('/api/products/validation')
+    })
+
+    document.getElementById('btn-network').addEventListener('click', () => {
+      cargarProductos('/api/products/networkfail')
+    })
+  </script>
+</body>
+</html>
