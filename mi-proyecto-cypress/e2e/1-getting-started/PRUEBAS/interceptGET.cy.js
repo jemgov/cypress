@@ -1,16 +1,26 @@
-describe("Interceptar y simular solicitudes",() =>{
-    it("intercepta y simula búsqueda en google",()=>{
-        cy.intercept("GET","https://www.google.com/search",{
-            statusCode: 200,
-            body: "<html><body><h1>Simulado respuesta de google</h1></body></html>"
-        }).as("searchGoogle")
+describe('Intercept GET y validación', () => {
+  it('Simula un GET y valida el intercept', () => {
+    cy.visit('https://example.cypress.io/commands/actions')
 
-        cy.visit("https://www.google.com")
-        cy.get('#L2AGLb > .QS5gu').click()
-        cy.get("#APjFqb").type("Cypress intercept example{enter}")
-        cy.wait("@searchGoogle")
-        cy.contains("Simulado respuesta de google").should("exist")
+    cy.intercept('GET', 'https://jsonplaceholder.typicode.com/posts/1', {
+      statusCode: 200,
+      body: {
+        userId: 1,
+        id: 1,
+        title: "Respuesta simulada",
+        body: "Contenido interceptado"
+      }
+    }).as('fakePost')
+
+    // Disparamos manualmente la petición GET desde el navegador
+    cy.window().then(win => {
+      return win.fetch('https://jsonplaceholder.typicode.com/posts/1')
     })
+
+    cy.wait('@fakePost')
+      .its('response.statusCode')
+      .should('eq', 200)
+  })
 })
 
 
