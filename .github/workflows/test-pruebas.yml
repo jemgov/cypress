@@ -29,14 +29,13 @@ jobs:
         shell: powershell
 
       # 4️⃣ Iniciar servidor local para carpeta public
-      - name: Start local server
+      - name: Start local server (cmd workaround)
         run: |
           npm install -g http-server
-          Start-Process "http-server" "-p 8080 ./public"
-          Start-Sleep -Seconds 5
+          start /B http-server ./public -p 8080
+          timeout /T 5
         working-directory: mi-proyecto-cypress
-        shell: powershell
-
+        shell: cmd
 
       # 5️⃣ Verificar archivos de prueba
       - name: List all tests in PRUEBAS
