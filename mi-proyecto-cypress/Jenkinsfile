@@ -4,7 +4,7 @@ pipeline {
     parameters {
         string(
             name: 'TEST_SPEC',
-            defaultValue: 'e2e/1-getting-started/PRUEBAS/*.cy.js',
+            defaultValue: 'cypress/e2e/**/*.cy.js',
             description: 'Ruta de los tests Cypress a ejecutar'
         )
     }
@@ -31,20 +31,20 @@ pipeline {
     post {
         always {
 
-            // 📌 Publicar resultados JUnit (generados por tu plugin en cypress.config.js)
-            junit 'results/*.xml'
+            // 📌 Publicar resultados JUnit generados en mi-proyecto-cypress/results/
+            junit 'mi-proyecto-cypress/results/*.xml'
 
             // 📌 Guardar reportes JUnit como artefactos
-            archiveArtifacts artifacts: 'results/*.xml', fingerprint: true
+            archiveArtifacts artifacts: 'mi-proyecto-cypress/results/*.xml', fingerprint: true
 
             // 📌 Guardar videos generados por Cypress
-            archiveArtifacts artifacts: 'cypress/report/videos/**/*.mp4', fingerprint: true
+            archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/videos/**/*.mp4', fingerprint: true
 
             // 📌 Guardar screenshots generados por Cypress
-            archiveArtifacts artifacts: 'cypress/report/screenshots/**/*.png', fingerprint: true
+            archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/screenshots/**/*.png', fingerprint: true
 
             // 📌 Guardar reportes Mochawesome (HTML + JSON)
-            archiveArtifacts artifacts: 'cypress/report/**/*.*', fingerprint: true
+            archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/**/*.*', fingerprint: true
         }
     }
 }
