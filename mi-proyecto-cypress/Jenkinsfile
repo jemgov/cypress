@@ -1,43 +1,39 @@
 pipeline {
   agent any
-  tools {
-    nodejs "NodeJS 25"
-  }
 
   parameters {
-    string(
-      name: 'TEST_SPEC',
-      defaultValue: 'e2e/1-getting-started/*.cy.js',
-      description: 'Ruta del test o tests a ejecutar'
-    )
+    string(name: 'TEST_SPEC', defaultValue: 'cypress/e2e/**/*.cy.js', description: 'Ruta del test a ejecutar')
+  }
+
+  tools {
+    nodejs 'NodeJS_25'
+  }
+
+  environment {
+    CYPRESS_CACHE_FOLDER = "${WORKSPACE}/.cache"
   }
 
   stages {
-
     stage('Instalar dependencias') {
       steps {
-        timeout(time: 5, unit: 'MINUTES') {
-          dir('mi-proyecto-cypress') {
-            powershell '''
-            Write-Host "=== Iniciando instalación de dependencias ==="
+        dir('mi-proyecto-cypress') {
+          powershell '''
+            echo "=== Iniciando instalación de dependencias ==="
             npm install
-            Write-Host "=== npm install finalizado ==="
-            '''
-          }
+            echo "=== npm install finalizado ==="
+          '''
         }
       }
     }
 
     stage('Ejecutar pruebas') {
       steps {
-        timeout(time: 10, unit: 'MINUTES') {
-          dir('mi-proyecto-cypress') {
-            powershell '''
-            Write-Host "=== Ejecutando pruebas Cypress ==="
-            npx cypress run --spec "$env:TEST_SPEC"
-            Write-Host "=== Cypress finalizado ==="
-            '''
-          }
+        dir('mi-proyecto-cypress') {
+          powershell '''
+            echo "=== Ejecutando pruebas Cypress ==="
+            npx cypress run --spec "${params.TEST_SPEC}"
+            echo "=== Cypress finalizado ==="
+          '''
         }
       }
     }
@@ -46,29 +42,9 @@ pipeline {
       steps {
         dir('mi-proyecto-cypress') {
           powershell '''
-          Write-Host "=== Generando reporte HTML ==="
-
-          try {
-            $jsonFiles = Get-ChildItem -Path cypress/report -Filter *.json
-            if ($jsonFiles.Count -eq 0) {
-              Write-Host "⚠️ No se encontraron archivos JSON para fusionar. Se omite la generación del reporte."
-              exit 0
-            }
-
-            $json = npx mochawesome-merge cypress/report/*.json
-            if (-not $json -or $json.Contains('"results": []')) {
-              Write-Host "⚠️ El contenido fusionado está vacío. No se generará el HTML."
-              exit 0
-            }
-
-            $json | Set-Content -Encoding utf8NoBOM mochawesome.json
-            npx marge mochawesome.json --reportDir cypress/report --inline
-            Write-Host "✅ Reporte generado en cypress/report/index.html"
-          } catch {
-            Write-Host "⚠️ Error durante la generación del reporte, pero no se detendrá el pipeline."
-          }
-
-          exit 0
+            echo "=== Generando reporte HTML ==="
+            npx mochawesome-merge cypress/report/.jsons/*.json > cypress/report/mochawesome.json
+            npx marge cypress/report/mochawesome.json --reportDir cypress/report/html
           '''
         }
       }
@@ -77,18 +53,19 @@ pipeline {
 
   post {
     always {
-      echo '=== Pipeline finalizado ==='
+      // 📦 Publicar artefactos
+      archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/**/*.*', allowEmptyArchive: true
 
-      archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/**', fingerprint: true
-
+      // 📊 Publicar reporte HTML
       publishHTML([
-        reportDir: 'mi-proyecto-cypress/cypress/report',
-        reportFiles: 'index.html',
+        reportDir: 'mi-proyecto-cypress/cypress/report/html',
+        reportFiles: 'mochawesome.html',
         reportName: 'Reporte Cypress',
-        keepAll: true,
-        alwaysLinkToLastBuild: true,
         allowMissing: false
       ])
+
+      // ✅ Publicar resultados JUnit
+      junit 'mi-proyecto-cypress/cypress/results/*.xml'
     }
   }
 }
