@@ -35,7 +35,8 @@ pipeline {
 
         stage('Ejecutar tests Cypress') {
             steps {
-                bat "npx cypress run --spec \"${params.TEST_SPEC}\""
+                // EJECUCIÓN ESTABLE EN WINDOWS
+                bat "npx cypress run --browser chrome --headless --spec \"${params.TEST_SPEC}\""
             }
         }
     }
