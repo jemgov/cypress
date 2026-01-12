@@ -17,13 +17,13 @@ pipeline {
 
         stage('Instalar dependencias') {
             steps {
-                sh 'npm ci'
+                bat 'npm ci'
             }
         }
 
         stage('Ejecutar tests Cypress') {
             steps {
-                sh 'npx cypress run --spec "$TEST_SPEC"'
+                bat "npx cypress run --spec \"${params.TEST_SPEC}\""
             }
         }
     }
