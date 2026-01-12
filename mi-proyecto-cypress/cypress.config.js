@@ -48,11 +48,14 @@ module.exports = defineConfig({
           fs.mkdirSync(backupVideosDir, { recursive: true });
         }
 
-        fs.readdirSync(videosDir).forEach(file => {
-          const srcPath = path.join(videosDir, file);
-          const destPath = path.join(backupVideosDir, `${Date.now()}_${file}`);
-          fs.renameSync(srcPath, destPath);
-        });
+        // Cambio importante: copiar en vez de mover para que Jenkins pueda archivar los videos
+        if (fs.existsSync(videosDir)) {
+          fs.readdirSync(videosDir).forEach(file => {
+            const srcPath = path.join(videosDir, file);
+            const destPath = path.join(backupVideosDir, `${Date.now()}_${file}`);
+            fs.copyFileSync(srcPath, destPath); // antes: renameSync
+          });
+        }
 
         console.log('Videos de esta ejecución guardados automáticamente en videos_backup');
 
@@ -64,28 +67,21 @@ module.exports = defineConfig({
           fs.mkdirSync(backupScreenshotsDir, { recursive: true });
         }
 
-       /* fs.readdirSync(screenshotsDir).forEach(file => {
-          const srcPath = path.join(screenshotsDir, file);
-          const destPath = path.join(backupScreenshotsDir, `${Date.now()}_${file}`);
-          fs.renameSync(srcPath, destPath);
-        });
-        */
-
         if (fs.existsSync(screenshotsDir)) {
-  const files = fs.readdirSync(screenshotsDir);
-  if (files.length > 0) {
-    files.forEach(file => {
-      const srcPath = path.join(screenshotsDir, file);
-      const destPath = path.join(backupScreenshotsDir, `${Date.now()}_${file}`);
-      fs.renameSync(srcPath, destPath);
-    });
-    console.log('Screenshots de esta ejecución guardadas automáticamente en screenshots_backup');
-  } else {
-    console.log('⚠️ No se encontraron screenshots para mover.');
-  }
-} else {
-  console.log('⚠️ Carpeta de screenshots no existe. No hay capturas que guardar.');
-}
+          const files = fs.readdirSync(screenshotsDir);
+          if (files.length > 0) {
+            files.forEach(file => {
+              const srcPath = path.join(screenshotsDir, file);
+              const destPath = path.join(backupScreenshotsDir, `${Date.now()}_${file}`);
+              fs.copyFileSync(srcPath, destPath); // antes: renameSync
+            });
+            console.log('Screenshots de esta ejecución guardadas automáticamente en screenshots_backup');
+          } else {
+            console.log('⚠️ No se encontraron screenshots para mover.');
+          }
+        } else {
+          console.log('⚠️ Carpeta de screenshots no existe. No hay capturas que guardar.');
+        }
 
         console.log('Screenshots de esta ejecución guardadas automáticamente en screenshots_backup');
       });
