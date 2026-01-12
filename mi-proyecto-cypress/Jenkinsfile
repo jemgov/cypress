@@ -39,7 +39,12 @@ pipeline {
           powershell """
             echo '=== Ejecutando pruebas Cypress ==='
             echo 'TEST_SPEC = ${params.TEST_SPEC}'
-            npx cypress run --spec \"${params.TEST_SPEC}\"
+
+            echo '=== Verificando configuración Cypress ==='
+            npx cypress info
+
+            echo '=== Lanzando Cypress con config forzado ==='
+            npx cypress run --config-file cypress.config.js --spec \"${params.TEST_SPEC}\"
           """
         }
       }
