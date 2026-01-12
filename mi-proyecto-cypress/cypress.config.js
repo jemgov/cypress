@@ -1,7 +1,7 @@
 const { defineConfig } = require("cypress");
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require("child_process");   // <-- añadido para ejecutar comandos
+const { execSync } = require("child_process");   // <-- necesario para ejecutar comandos
 
 module.exports = defineConfig({
 
@@ -98,7 +98,7 @@ module.exports = defineConfig({
 
           console.log("=== Generando HTML de Mochawesome ===");
           execSync(
-            `npx marge mochawesome.json --reportDir cypress/report --inline`,
+            `npx marge mochawesome.json --reportDir cypress/report --inline --reportFilename index.html`,
             { stdio: "inherit" }
           );
 
