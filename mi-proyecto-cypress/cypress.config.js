@@ -1,6 +1,7 @@
 const { defineConfig } = require("cypress");
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require("child_process"); // ← NUEVO: necesario para merge + HTML
 
 module.exports = defineConfig({
 
@@ -13,7 +14,7 @@ module.exports = defineConfig({
     embeddedScreenshots: true,
     inlineAssets: true,
     saveJson: true,
-    saveHtml: true, // 🔥 Genera HTML automáticamente sin merge
+    saveHtml: true, // 🔥 Genera HTML automáticamente sin merge (pero Cypress 15 ya no lo hace solo)
     reportPageTitle: "Test-Suite",
   },
 
@@ -83,6 +84,25 @@ module.exports = defineConfig({
       // Backups de vídeos y screenshots
       // 🔥 Ahora se ejecuta DESPUÉS de que el HTML esté generado
       on('after:run', () => {
+
+        const reportDir = path.join(__dirname, 'cypress/report');
+
+        // === NUEVO: merge + generación de HTML (Cypress 15 ya no lo hace solo) ===
+        try {
+          console.log("🔄 Ejecutando mochawesome-merge...");
+          execSync(`npx mochawesome-merge ${reportDir}/*.json > ${reportDir}/mochawesome.json`, {
+            stdio: "inherit"
+          });
+
+          console.log("📄 Generando mochawesome.html...");
+          execSync(`npx marge ${reportDir}/mochawesome.json --reportDir ${reportDir}`, {
+            stdio: "inherit"
+          });
+
+        } catch (err) {
+          console.error("❌ Error generando HTML mochawesome:", err);
+        }
+        // === FIN DEL BLOQUE NUEVO ===
 
         const htmlReport = path.join(__dirname, 'cypress/report/mochawesome.html');
 
