@@ -28,8 +28,6 @@ pipeline {
 
             echo "=== Instalando binario de Cypress ==="
             npx cypress install
-
-            echo "=== Instalación completada ==="
           '''
         }
       }
@@ -41,19 +39,16 @@ pipeline {
           powershell '''
             echo "=== Ejecutando pruebas Cypress ==="
             npx cypress run --spec "$env:TEST_SPEC"
-            echo "=== Cypress finalizado ==="
           '''
         }
       }
     }
 
-    stage('Generar reporte Mochawesome HTML') {
+    stage('Generar reporte HTML Mochawesome') {
       steps {
         dir('mi-proyecto-cypress') {
           powershell '''
             echo "=== Fusionando JSON de Mochawesome ==="
-
-            # Fusionar todos los JSON generados por Cypress
             npx mochawesome-merge cypress/report/*.json -o cypress/report/mochawesome.json
 
             echo "=== Generando HTML final ==="
@@ -67,20 +62,16 @@ pipeline {
   post {
     always {
 
-      # Archivar artefactos (JSON, HTML, vídeos, screenshots)
       archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/**/*.*', allowEmptyArchive: true
 
-      # Publicar el reporte HTML Mochawesome
       publishHTML([
         reportDir: 'mi-proyecto-cypress/cypress/report/html',
         reportFiles: 'mochawesome.html',
         reportName: 'Reporte Cypress (Mochawesome)',
-        allowMissing: false,
         keepAll: true,
         alwaysLinkToLastBuild: true
       ])
 
-      # Publicar XML JUnit para estadísticas de Jenkins
       junit 'mi-proyecto-cypress/cypress/results/*.xml'
     }
   }
