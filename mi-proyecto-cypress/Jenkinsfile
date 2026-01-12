@@ -69,7 +69,8 @@ pipeline {
         reportFiles: 'mochawesome.html',
         reportName: 'Reporte Cypress (Mochawesome)',
         keepAll: true,
-        alwaysLinkToLastBuild: true
+        alwaysLinkToLastBuild: true,
+        allowMissing: false
       ])
 
       junit 'mi-proyecto-cypress/cypress/results/*.xml'
