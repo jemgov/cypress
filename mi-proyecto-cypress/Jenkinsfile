@@ -72,21 +72,26 @@ pipeline {
             Write-Host "=== Generando reporte HTML ==="
 
             try {
-              $jsonFiles = Get-ChildItem -Path cypress/report -Filter *.json
+              # Verificar si existen JSON en la carpeta correcta
+              $jsonFiles = Get-ChildItem -Path cypress/report/.jsons -Filter *.json -ErrorAction SilentlyContinue
               if ($jsonFiles.Count -eq 0) {
                 Write-Host "⚠️ No hay JSON para fusionar. Se omite el reporte."
                 exit 0
               }
 
-              $json = npx mochawesome-merge cypress/report/*.json
-              if (-not $json -or $json.Contains('"results": []')) {
-                Write-Host "⚠️ JSON vacío. No se genera HTML."
+              Write-Host "=== Fusionando JSON con mochawesome-merge ==="
+              cmd /c "npx mochawesome-merge cypress/report/.jsons/*.json > mochawesome.json"
+
+              if (-not (Test-Path mochawesome.json)) {
+                Write-Host "⚠️ No se generó mochawesome.json. Se omite el reporte."
                 exit 0
               }
 
-              $json | Set-Content -Encoding utf8NoBOM mochawesome.json
+              Write-Host "=== Generando HTML con marge ==="
               npx marge mochawesome.json --reportDir cypress/report --inline
+
               Write-Host "✅ Reporte generado en cypress/report/index.html"
+
             } catch {
               Write-Host "⚠️ Error generando el reporte, pero no se detiene el pipeline."
             }
