@@ -6,7 +6,7 @@ pipeline {
   }
 
   tools {
-    nodejs 'NodeJS_25'
+    nodejs 'NodeJS 25'   // ← CORREGIDO
   }
 
   environment {
@@ -53,18 +53,21 @@ pipeline {
 
   post {
     always {
+
       // 📦 Publicar artefactos
       archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/**/*.*', allowEmptyArchive: true
 
-      // 📊 Publicar reporte HTML
+      // 📊 Publicar reporte HTML (CORREGIDO)
       publishHTML([
         reportDir: 'mi-proyecto-cypress/cypress/report/html',
         reportFiles: 'mochawesome.html',
         reportName: 'Reporte Cypress',
-        allowMissing: false
+        allowMissing: false,
+        keepAll: true,                 // ← OBLIGATORIO
+        alwaysLinkToLastBuild: true    // ← OBLIGATORIO
       ])
 
-      // ✅ Publicar resultados JUnit
+      // 📈 Publicar resultados JUnit
       junit 'mi-proyecto-cypress/cypress/results/*.xml'
     }
   }
