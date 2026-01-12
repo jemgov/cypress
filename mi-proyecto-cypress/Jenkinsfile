@@ -30,7 +30,7 @@ pipeline {
             npm install cypress-mochawesome-reporter --save-dev
 
             echo "=== Verificando reporter instalado ==="
-            npm list cypress-mochawesome-reporter || echo "❌ Reporter NO instalado"
+            npm list cypress-mochawesome-reporter
 
             echo "=== Instalando binario de Cypress ==="
             npx cypress install
