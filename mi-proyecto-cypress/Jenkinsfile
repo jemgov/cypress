@@ -2,11 +2,15 @@ pipeline {
   agent any
 
   parameters {
-    string(name: 'TEST_SPEC', defaultValue: 'cypress/e2e/**/*.cy.js', description: 'Ruta del test a ejecutar')
+    string(
+      name: 'TEST_SPEC',
+      defaultValue: 'cypress/e2e/**/*.cy.js',
+      description: 'Ruta del test a ejecutar'
+    )
   }
 
   tools {
-    nodejs 'NodeJS 25'   // ← CORREGIDO
+    nodejs 'NodeJS 25'   // ← Nombre correcto de tu instalación
   }
 
   environment {
@@ -14,6 +18,7 @@ pipeline {
   }
 
   stages {
+
     stage('Instalar dependencias') {
       steps {
         dir('mi-proyecto-cypress') {
@@ -31,7 +36,7 @@ pipeline {
         dir('mi-proyecto-cypress') {
           powershell '''
             echo "=== Ejecutando pruebas Cypress ==="
-            npx cypress run --spec "${params.TEST_SPEC}"
+            npx cypress run --spec "$env:TEST_SPEC"
             echo "=== Cypress finalizado ==="
           '''
         }
@@ -43,8 +48,15 @@ pipeline {
         dir('mi-proyecto-cypress') {
           powershell '''
             echo "=== Generando reporte HTML ==="
-            npx mochawesome-merge cypress/report/.jsons/*.json > cypress/report/mochawesome.json
-            npx marge cypress/report/mochawesome.json --reportDir cypress/report/html
+
+            # Fusionar JSON de mochawesome
+            if (Test-Path "cypress/report/.jsons/*.json") {
+              npx mochawesome-merge cypress/report/.jsons/*.json > cypress/report/mochawesome.json
+              npx marge cypress/report/mochawesome.json --reportDir cypress/report/html
+            }
+            else {
+              echo "⚠️ No se encontraron archivos JSON para fusionar."
+            }
           '''
         }
       }
@@ -54,20 +66,20 @@ pipeline {
   post {
     always {
 
-      // 📦 Publicar artefactos
+      // 📦 Archivar artefactos (vídeos, screenshots, JSON, HTML…)
       archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/**/*.*', allowEmptyArchive: true
 
-      // 📊 Publicar reporte HTML (CORREGIDO)
+      // 📊 Publicar reporte HTML (parámetros obligatorios incluidos)
       publishHTML([
         reportDir: 'mi-proyecto-cypress/cypress/report/html',
         reportFiles: 'mochawesome.html',
         reportName: 'Reporte Cypress',
         allowMissing: false,
-        keepAll: true,                 // ← OBLIGATORIO
-        alwaysLinkToLastBuild: true    // ← OBLIGATORIO
+        keepAll: true,
+        alwaysLinkToLastBuild: true
       ])
 
-      // 📈 Publicar resultados JUnit
+      // 📈 Publicar resultados JUnit (XML)
       junit 'mi-proyecto-cypress/cypress/results/*.xml'
     }
   }
