@@ -14,7 +14,8 @@ module.exports = defineConfig({
     embeddedScreenshots: true,
     inlineAssets: true,
     saveJson: true,
-    saveHtml: true, // 🔥 Genera HTML automáticamente sin merge (pero Cypress 15 ya no lo hace solo)
+    // ❗ IMPORTANTE: quitamos saveHtml para evitar que cree report/report
+    // saveHtml: true,
     reportPageTitle: "Test-Suite",
   },
 
@@ -92,6 +93,8 @@ module.exports = defineConfig({
         // === MERGE + HTML (Cypress 15 ya no lo hace solo) ===
         try {
           console.log("🔄 Ejecutando mochawesome-merge...");
+
+          // ❗ RUTA CORRECTA: Cypress 15 guarda JSON en .jsons
           execSync(`npx mochawesome-merge ${reportDir}/.jsons/*.json > ${reportDir}/mochawesome.json`, {
             stdio: "inherit"
           });
