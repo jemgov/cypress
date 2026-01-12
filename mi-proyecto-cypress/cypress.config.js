@@ -4,15 +4,16 @@ const path = require('path');
 
 module.exports = defineConfig({
 
-  // Reporter principal (Mochawesome puro)
-  reporter: "mochawesome",
+  // Reporter limpio y moderno
+  reporter: "cypress-mochawesome-reporter",
   reporterOptions: {
-    // Guardamos los JSON individuales en .jsons
-    reportDir: "cypress/report/.jsons",
-    overwrite: false,
-    html: false,   // 🔹 Solo JSON aquí
-    json: true,
-    reportFilename: "mochawesome_[name]" // nombres únicos por spec
+    reportDir: "cypress/report",
+    charts: true,
+    embeddedScreenshots: true,
+    inlineAssets: true,
+    saveJson: true,
+    saveHtml: true, // 🔥 CLAVE: genera HTML automáticamente
+    reportPageTitle: "Test-Suite"
   },
 
   video: true,
@@ -28,8 +29,7 @@ module.exports = defineConfig({
     trashAssetsBeforeRuns: false,
 
     setupNodeEvents(on, config) {
-      // 🔹 Ya no usamos el plugin de cypress-mochawesome-reporter
-      // require('cypress-mochawesome-reporter/plugin')(on);
+      require('cypress-mochawesome-reporter/plugin')(on);
 
       // Crear carpetas necesarias para Jenkins
       const requiredDirs = [
@@ -45,7 +45,7 @@ module.exports = defineConfig({
         }
       });
 
-      // 🔧 Generar XML JUnit sin bloquear Cypress
+      // Generar XML JUnit
       on('after:spec', (spec, results) => {
         if (!results || !results.tests || results.tests.length === 0) return;
 
@@ -75,40 +75,6 @@ module.exports = defineConfig({
         xml += `</testsuite>\n`;
 
         fs.writeFileSync(xmlFile, xml, 'utf-8');
-      });
-
-      // Backups de vídeos y screenshots
-      on('after:run', () => {
-        const videosDir = path.join(__dirname, 'cypress/report/videos');
-        const backupVideosDir = path.join(__dirname, 'videos_backup');
-
-        if (!fs.existsSync(backupVideosDir)) {
-          fs.mkdirSync(backupVideosDir, { recursive: true });
-        }
-
-        if (fs.existsSync(videosDir)) {
-          fs.readdirSync(videosDir).forEach(file => {
-            const srcPath = path.join(videosDir, file);
-            const destPath = path.join(backupVideosDir, `${Date.now()}_${file}`);
-            fs.renameSync(srcPath, destPath);
-          });
-        }
-
-        const screenshotsDir = path.join(__dirname, 'cypress/report/screenshots');
-        const backupScreenshotsDir = path.join(__dirname, 'screenshots_backup');
-
-        if (!fs.existsSync(backupScreenshotsDir)) {
-          fs.mkdirSync(backupScreenshotsDir, { recursive: true });
-        }
-
-        if (fs.existsSync(screenshotsDir)) {
-          const files = fs.readdirSync(screenshotsDir);
-          files.forEach(file => {
-            const srcPath = path.join(screenshotsDir, file);
-            const destPath = path.join(backupScreenshotsDir, `${Date.now()}_${file}`);
-            fs.renameSync(srcPath, destPath);
-          });
-        }
       });
 
       return config;
