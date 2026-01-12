@@ -1,8 +1,6 @@
 const { defineConfig } = require("cypress");
 const fs = require('fs');
 const path = require('path');
-const mocha = require('mocha');
-const MochaJUnitReporter = require('mocha-junit-reporter');
 
 module.exports = defineConfig({
 
@@ -32,7 +30,7 @@ module.exports = defineConfig({
     setupNodeEvents(on, config) {
       require('cypress-mochawesome-reporter/plugin')(on);
 
-      // 🔧 Crear carpetas necesarias si no existen (para Jenkins)
+      // Crear carpetas necesarias para Jenkins
       const requiredDirs = [
         path.join(__dirname, 'cypress/report/videos'),
         path.join(__dirname, 'cypress/report/screenshots'),
@@ -45,7 +43,7 @@ module.exports = defineConfig({
         }
       });
 
-      // Generar reporte JUnit adicional (versión corregida)
+      // 🔧 Generar XML JUnit sin bloquear Cypress
       on('after:spec', (spec, results) => {
         if (!results || !results.tests || results.tests.length === 0) return;
 
@@ -54,36 +52,31 @@ module.exports = defineConfig({
           fs.mkdirSync(junitOutputDir, { recursive: true });
         }
 
-        const mochaRunner = new mocha({
-          reporter: MochaJUnitReporter,
-          reporterOptions: {
-            mochaFile: path.join(junitOutputDir, `${spec.name}.xml`)
-          }
-        });
+        const xmlFile = path.join(junitOutputDir, `${spec.name}.xml`);
 
-        const mochaSuite = mochaRunner.suite;
+        let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+        xml += `<testsuite name="${spec.name}" tests="${results.tests.length}">\n`;
 
-        // Crear una suite por spec
-        const suite = mochaSuite.addSuite(new mocha.Suite(spec.name));
-
-        // Añadir cada test ejecutado
         results.tests.forEach(test => {
-          const mTest = new mocha.Test(test.title.join(' '));
-          suite.addTest(mTest);
+          const testName = test.title.join(' ');
+          const status = test.state === 'failed' ? 'failed' : 'passed';
 
-          if (test.state === 'failed') {
-            mTest.state = 'failed';
-            mTest.err = { message: test.displayError };
-          } else {
-            mTest.state = 'passed';
+          xml += `  <testcase name="${testName}">\n`;
+
+          if (status === 'failed') {
+            xml += `    <failure message="${test.displayError || 'Error'}"></failure>\n`;
           }
+
+          xml += `  </testcase>\n`;
         });
 
-        mochaRunner.run();
+        xml += `</testsuite>\n`;
+
+        fs.writeFileSync(xmlFile, xml, 'utf-8');
       });
 
-      // Tu lógica de backup permanece intacta
-      on('after:run', (results) => {
+      // Backups de vídeos y screenshots
+      on('after:run', () => {
         const videosDir = path.join(__dirname, 'cypress/report/videos');
         const backupVideosDir = path.join(__dirname, 'videos_backup');
 
@@ -91,11 +84,13 @@ module.exports = defineConfig({
           fs.mkdirSync(backupVideosDir, { recursive: true });
         }
 
-        fs.readdirSync(videosDir).forEach(file => {
-          const srcPath = path.join(videosDir, file);
-          const destPath = path.join(backupVideosDir, `${Date.now()}_${file}`);
-          fs.renameSync(srcPath, destPath);
-        });
+        if (fs.existsSync(videosDir)) {
+          fs.readdirSync(videosDir).forEach(file => {
+            const srcPath = path.join(videosDir, file);
+            const destPath = path.join(backupVideosDir, `${Date.now()}_${file}`);
+            fs.renameSync(srcPath, destPath);
+          });
+        }
 
         const screenshotsDir = path.join(__dirname, 'cypress/report/screenshots');
         const backupScreenshotsDir = path.join(__dirname, 'screenshots_backup');
@@ -106,13 +101,11 @@ module.exports = defineConfig({
 
         if (fs.existsSync(screenshotsDir)) {
           const files = fs.readdirSync(screenshotsDir);
-          if (files.length > 0) {
-            files.forEach(file => {
-              const srcPath = path.join(screenshotsDir, file);
-              const destPath = path.join(backupScreenshotsDir, `${Date.now()}_${file}`);
-              fs.renameSync(srcPath, destPath);
-            });
-          }
+          files.forEach(file => {
+            const srcPath = path.join(screenshotsDir, file);
+            const destPath = path.join(backupScreenshotsDir, `${Date.now()}_${file}`);
+            fs.renameSync(srcPath, destPath);
+          });
         }
       });
 
