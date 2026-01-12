@@ -1,7 +1,7 @@
 const { defineConfig } = require("cypress");
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require("child_process"); // ← NUEVO: necesario para merge + HTML
+const { execSync } = require("child_process"); // ← Necesario para merge + HTML
 
 module.exports = defineConfig({
 
@@ -19,9 +19,11 @@ module.exports = defineConfig({
   },
 
   video: true,
-  videosFolder: "cypress/report/videos",
+
+  // ❗ RUTAS CORREGIDAS PARA EVITAR QUE CYPRESS 15 BORRE EL REPORT
+  videosFolder: "cypress/videos",
   screenshotOnRunFailure: true,
-  screenshotsFolder: "cypress/report/screenshots",
+  screenshotsFolder: "cypress/screenshots",
 
   env: {
     url: "https://www.google.es/",
@@ -38,8 +40,8 @@ module.exports = defineConfig({
       // Crear carpetas necesarias para Jenkins
       const requiredDirs = [
         path.join(__dirname, 'cypress/report'),              // ← Carpeta base añadida
-        path.join(__dirname, 'cypress/report/videos'),
-        path.join(__dirname, 'cypress/report/screenshots'),
+        path.join(__dirname, 'cypress/videos'),
+        path.join(__dirname, 'cypress/screenshots'),
         path.join(__dirname, 'cypress/results')
       ];
 
@@ -87,7 +89,7 @@ module.exports = defineConfig({
 
         const reportDir = path.join(__dirname, 'cypress/report');
 
-        // === NUEVO: merge + generación de HTML (Cypress 15 ya no lo hace solo) ===
+        // === MERGE + HTML (Cypress 15 ya no lo hace solo) ===
         try {
           console.log("🔄 Ejecutando mochawesome-merge...");
           execSync(`npx mochawesome-merge ${reportDir}/*.json > ${reportDir}/mochawesome.json`, {
@@ -113,7 +115,7 @@ module.exports = defineConfig({
         }
 
         // === BACKUP DE VIDEOS ===
-        const videosDir = path.join(__dirname, 'cypress/report/videos');
+        const videosDir = path.join(__dirname, 'cypress/videos');
         const backupVideosDir = path.join(__dirname, 'videos_backup');
 
         if (!fs.existsSync(backupVideosDir)) {
@@ -129,7 +131,7 @@ module.exports = defineConfig({
         }
 
         // === BACKUP DE SCREENSHOTS ===
-        const screenshotsDir = path.join(__dirname, 'cypress/report/screenshots');
+        const screenshotsDir = path.join(__dirname, 'cypress/screenshots');
         const backupScreenshotsDir = path.join(__dirname, 'screenshots_backup');
 
         if (!fs.existsSync(backupScreenshotsDir)) {
