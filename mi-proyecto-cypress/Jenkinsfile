@@ -1,79 +1,111 @@
-
 pipeline {
   agent any
+
   tools {
     nodejs "NodeJS 25"
   }
+
   parameters {
-    string(name: 'TEST_SPEC', defaultValue: 'e2e/1-getting-started/PRUEBAS/*.cy.js', description: 'Ruta del test o tests a ejecutar')
+    string(
+      name: 'TEST_SPEC',
+      defaultValue: 'e2e/1-getting-started/PRUEBAS/*.cy.js',
+      description: 'Ruta del test o tests a ejecutar'
+    )
   }
+
   stages {
+
     stage('Instalar dependencias') {
       steps {
         timeout(time: 5, unit: 'MINUTES') {
           dir('mi-proyecto-cypress') {
             powershell '''
-            Write-Host "=== Iniciando instalación de dependencias ==="
-            npm install
-            Write-Host "=== npm install finalizado ==="
+              Write-Host "=== Instalando dependencias ==="
+              npm ci
+              Write-Host "=== Dependencias instaladas ==="
             '''
           }
         }
       }
     }
-    stage('Ejecutar pruebas') {
+
+    stage('Ejecutar pruebas Cypress') {
       steps {
         timeout(time: 10, unit: 'MINUTES') {
           dir('mi-proyecto-cypress') {
             powershell '''
-            Write-Host "=== Ejecutando pruebas Cypress ==="
-            npx cypress run --spec "$env:TEST_SPEC"
-            Write-Host "=== Cypress finalizado ==="
+              Write-Host "=== Ejecutando pruebas Cypress ==="
+              npx cypress run --spec "$env:TEST_SPEC"
+              Write-Host "=== Pruebas finalizadas ==="
             '''
           }
         }
       }
     }
-    stage('Generar reporte') {
+
+    stage('Diagnóstico de artefactos') {
       steps {
         dir('mi-proyecto-cypress') {
           powershell '''
-          Write-Host "=== Generando reporte HTML ==="
+            Write-Host "=== Diagnóstico de artefactos ==="
 
-          try {
-            $jsonFiles = Get-ChildItem -Path cypress/report -Filter *.json
-            if ($jsonFiles.Count -eq 0) {
-              Write-Host "⚠️ No se encontraron archivos JSON para fusionar. Se omite la generación del reporte."
-              exit 0
+            Write-Host "--- Videos ---"
+            Get-ChildItem -Recurse cypress/report/videos -ErrorAction SilentlyContinue
+
+            Write-Host "--- Screenshots ---"
+            Get-ChildItem -Recurse cypress/report/screenshots -ErrorAction SilentlyContinue
+
+            Write-Host "--- Backups de videos ---"
+            Get-ChildItem -Recurse videos_backup -ErrorAction SilentlyContinue
+
+            Write-Host "--- Backups de screenshots ---"
+            Get-ChildItem -Recurse screenshots_backup -ErrorAction SilentlyContinue
+          '''
+        }
+      }
+    }
+
+    stage('Generar reporte Mochawesome') {
+      steps {
+        dir('mi-proyecto-cypress') {
+          powershell '''
+            Write-Host "=== Generando reporte HTML ==="
+
+            try {
+              $jsonFiles = Get-ChildItem -Path cypress/report -Filter *.json
+              if ($jsonFiles.Count -eq 0) {
+                Write-Host "⚠️ No hay JSON para fusionar. Se omite el reporte."
+                exit 0
+              }
+
+              $json = npx mochawesome-merge cypress/report/*.json
+              if (-not $json -or $json.Contains('"results": []')) {
+                Write-Host "⚠️ JSON vacío. No se genera HTML."
+                exit 0
+              }
+
+              $json | Set-Content -Encoding utf8NoBOM mochawesome.json
+              npx marge mochawesome.json --reportDir cypress/report --inline
+              Write-Host "✅ Reporte generado en cypress/report/index.html"
+            } catch {
+              Write-Host "⚠️ Error generando el reporte, pero no se detiene el pipeline."
             }
 
-            $json = npx mochawesome-merge cypress/report/*.json
-            if (-not $json -or $json.Contains('"results": []')) {
-              Write-Host "⚠️ El contenido fusionado está vacío. No se generará el HTML."
-              exit 0
-            }
-
-            $json | Set-Content -Encoding utf8NoBOM mochawesome.json
-            npx marge mochawesome.json --reportDir cypress/report --inline
-            Write-Host "✅ Reporte generado en cypress/report/index.html"
-          } catch {
-            Write-Host "⚠️ Se produjo un error durante la generación del reporte, pero no se detendrá el pipeline."
-          }
-
-          exit 0
+            exit 0
           '''
         }
       }
     }
   }
+
   post {
     always {
-      echo '=== Pipeline finalizado ==='
+      echo '=== Archivando artefactos ==='
 
-      // Publicar todos los recursos del reporte como artefactos (HTML, videos, imágenes, etc.)
-      archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/**', fingerprint: true
+      archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/**', allowEmptyArchive: true
+      archiveArtifacts artifacts: 'mi-proyecto-cypress/videos_backup/**', allowEmptyArchive: true
+      archiveArtifacts artifacts: 'mi-proyecto-cypress/screenshots_backup/**', allowEmptyArchive: true
 
-      // Mostrar el reporte HTML directamente en Jenkins
       publishHTML([
         reportDir: 'mi-proyecto-cypress/cypress/report',
         reportFiles: 'index.html',
@@ -82,12 +114,6 @@ pipeline {
         alwaysLinkToLastBuild: true,
         allowMissing: false
       ])
-    }
-    success {
-      echo '✅ Todos los pasos se completaron correctamente.'
-    }
-    failure {
-      echo '❌ El pipeline falló. Revisa los logs para más detalles.'
     }
   }
 }
