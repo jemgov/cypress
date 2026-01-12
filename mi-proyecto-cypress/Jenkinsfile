@@ -38,9 +38,10 @@ pipeline {
         dir('mi-proyecto-cypress') {
           powershell '''
             echo "=== Ejecutando pruebas Cypress ==="
-            echo "TEST_SPEC = $env:TEST_SPEC"
+            echo "TEST_SPEC = ${TEST_SPEC}"
 
-            npx cypress run --spec "$env:TEST_SPEC"
+            # IMPORTANTE: usar comillas simples para evitar que PowerShell destruya el patrón
+            npx cypress run --spec '${TEST_SPEC}'
           '''
         }
       }
