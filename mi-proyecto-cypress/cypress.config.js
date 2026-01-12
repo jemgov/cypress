@@ -4,7 +4,8 @@ const path = require('path');
 
 module.exports = defineConfig({
 
-  // Reporter limpio y moderno
+  // Reporter principal (Mochawesome)
+  // 🔥 Ahora usando cypress-mochawesome-reporter para evitar duplicados y generar HTML limpio
   reporter: "cypress-mochawesome-reporter",
   reporterOptions: {
     reportDir: "cypress/report",
@@ -12,8 +13,8 @@ module.exports = defineConfig({
     embeddedScreenshots: true,
     inlineAssets: true,
     saveJson: true,
-    saveHtml: true, // 🔥 CLAVE: genera HTML automáticamente
-    reportPageTitle: "Test-Suite"
+    saveHtml: true, // 🔥 Genera HTML automáticamente sin merge
+    reportPageTitle: "Test-Suite",
   },
 
   video: true,
@@ -29,11 +30,13 @@ module.exports = defineConfig({
     trashAssetsBeforeRuns: false,
 
     setupNodeEvents(on, config) {
+
+      // Plugin oficial del reporter
       require('cypress-mochawesome-reporter/plugin')(on);
 
       // Crear carpetas necesarias para Jenkins
       const requiredDirs = [
-        path.join(__dirname, 'cypress/report'),
+        path.join(__dirname, 'cypress/report'),              // ← Carpeta base añadida
         path.join(__dirname, 'cypress/report/videos'),
         path.join(__dirname, 'cypress/report/screenshots'),
         path.join(__dirname, 'cypress/results')
@@ -45,7 +48,7 @@ module.exports = defineConfig({
         }
       });
 
-      // Generar XML JUnit
+      // 🔧 Generar XML JUnit sin bloquear Cypress
       on('after:spec', (spec, results) => {
         if (!results || !results.tests || results.tests.length === 0) return;
 
@@ -75,6 +78,51 @@ module.exports = defineConfig({
         xml += `</testsuite>\n`;
 
         fs.writeFileSync(xmlFile, xml, 'utf-8');
+      });
+
+      // Backups de vídeos y screenshots
+      // 🔥 Ahora se ejecuta DESPUÉS de que el HTML esté generado
+      on('after:run', () => {
+
+        const htmlReport = path.join(__dirname, 'cypress/report/mochawesome.html');
+
+        // Si el HTML aún no existe, no movemos nada
+        if (!fs.existsSync(htmlReport)) {
+          console.log("HTML aún no generado, no se moverán vídeos ni screenshots.");
+          return;
+        }
+
+        // === BACKUP DE VIDEOS ===
+        const videosDir = path.join(__dirname, 'cypress/report/videos');
+        const backupVideosDir = path.join(__dirname, 'videos_backup');
+
+        if (!fs.existsSync(backupVideosDir)) {
+          fs.mkdirSync(backupVideosDir, { recursive: true });
+        }
+
+        if (fs.existsSync(videosDir)) {
+          fs.readdirSync(videosDir).forEach(file => {
+            const srcPath = path.join(videosDir, file);
+            const destPath = path.join(backupVideosDir, `${Date.now()}_${file}`);
+            fs.renameSync(srcPath, destPath);
+          });
+        }
+
+        // === BACKUP DE SCREENSHOTS ===
+        const screenshotsDir = path.join(__dirname, 'cypress/report/screenshots');
+        const backupScreenshotsDir = path.join(__dirname, 'screenshots_backup');
+
+        if (!fs.existsSync(backupScreenshotsDir)) {
+          fs.mkdirSync(backupScreenshotsDir, { recursive: true });
+        }
+
+        if (fs.existsSync(screenshotsDir)) {
+          fs.readdirSync(screenshotsDir).forEach(file => {
+            const srcPath = path.join(screenshotsDir, file);
+            const destPath = path.join(backupScreenshotsDir, `${Date.now()}_${file}`);
+            fs.renameSync(srcPath, destPath);
+          });
+        }
       });
 
       return config;
