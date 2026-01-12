@@ -32,9 +32,9 @@ module.exports = defineConfig({
     setupNodeEvents(on, config) {
       require('cypress-mochawesome-reporter/plugin')(on);
 
-      // Generar reporte JUnit adicional
+      // Generar reporte JUnit adicional (versión corregida)
       on('after:spec', (spec, results) => {
-        if (!results || !results.tests) return;
+        if (!results || !results.tests || results.tests.length === 0) return;
 
         const junitOutputDir = path.join(__dirname, 'results');
         if (!fs.existsSync(junitOutputDir)) {
@@ -50,13 +50,17 @@ module.exports = defineConfig({
 
         const mochaSuite = mochaRunner.suite;
 
+        // Crear una suite por spec
+        const suite = mochaSuite.addSuite(new mocha.Suite(spec.name));
+
+        // Añadir cada test ejecutado
         results.tests.forEach(test => {
           const mTest = new mocha.Test(test.title.join(' '));
-          mochaSuite.addTest(mTest);
+          suite.addTest(mTest);
 
           if (test.state === 'failed') {
             mTest.state = 'failed';
-            mTest.err = test.displayError;
+            mTest.err = { message: test.displayError };
           } else {
             mTest.state = 'passed';
           }
