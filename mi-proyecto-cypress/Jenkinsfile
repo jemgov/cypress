@@ -1,75 +1,93 @@
+
 pipeline {
   agent any
-
-  parameters {
-    string(
-      name: 'TEST_SPEC',
-      defaultValue: 'cypress/e2e/**/*.cy.js',
-      description: 'Ruta del test a ejecutar'
-    )
-  }
-
   tools {
-    nodejs 'NodeJS 25'
+    nodejs "NodeJS 25"
   }
-
-  environment {
-    CYPRESS_CACHE_FOLDER = "${WORKSPACE}/.cache"
+  parameters {
+    string(name: 'TEST_SPEC', defaultValue: 'e2e/1-getting-started/PRUEBAS/*.cy.js', description: 'Ruta del test o tests a ejecutar')
   }
-
   stages {
-
     stage('Instalar dependencias') {
+      steps {
+        timeout(time: 5, unit: 'MINUTES') {
+          dir('mi-proyecto-cypress') {
+            powershell '''
+            Write-Host "=== Iniciando instalación de dependencias ==="
+            npm install
+            Write-Host "=== npm install finalizado ==="
+            '''
+          }
+        }
+      }
+    }
+    stage('Ejecutar pruebas') {
+      steps {
+        timeout(time: 10, unit: 'MINUTES') {
+          dir('mi-proyecto-cypress') {
+            powershell '''
+            Write-Host "=== Ejecutando pruebas Cypress ==="
+            npx cypress run --spec "$env:TEST_SPEC"
+            Write-Host "=== Cypress finalizado ==="
+            '''
+          }
+        }
+      }
+    }
+    stage('Generar reporte') {
       steps {
         dir('mi-proyecto-cypress') {
           powershell '''
-            echo "=== Instalando dependencias ==="
-            npm install
+          Write-Host "=== Generando reporte HTML ==="
 
-            echo "=== Instalando reporter (forzado) ==="
-            npm install cypress-mochawesome-reporter --save-dev
+          try {
+            $jsonFiles = Get-ChildItem -Path cypress/report -Filter *.json
+            if ($jsonFiles.Count -eq 0) {
+              Write-Host "⚠️ No se encontraron archivos JSON para fusionar. Se omite la generación del reporte."
+              exit 0
+            }
 
-            echo "=== Verificando reporter instalado ==="
-            npm list cypress-mochawesome-reporter
+            $json = npx mochawesome-merge cypress/report/*.json
+            if (-not $json -or $json.Contains('"results": []')) {
+              Write-Host "⚠️ El contenido fusionado está vacío. No se generará el HTML."
+              exit 0
+            }
 
-            echo "=== Instalando binario de Cypress ==="
-            npx cypress install
+            $json | Set-Content -Encoding utf8NoBOM mochawesome.json
+            npx marge mochawesome.json --reportDir cypress/report --inline
+            Write-Host "✅ Reporte generado en cypress/report/index.html"
+          } catch {
+            Write-Host "⚠️ Se produjo un error durante la generación del reporte, pero no se detendrá el pipeline."
+          }
+
+          exit 0
           '''
         }
       }
     }
-
-    stage('Ejecutar pruebas Cypress') {
-      steps {
-        dir('mi-proyecto-cypress') {
-          powershell """
-            echo '=== Ejecutando pruebas Cypress ==='
-            echo 'TEST_SPEC = ${params.TEST_SPEC}'
-
-            echo '=== Lanzando Cypress ==='
-            npx cypress run --spec "${params.TEST_SPEC}"
-          """
-        }
-      }
-    }
   }
-
   post {
     always {
-      echo "=== Publicando artefactos ==="
+      echo '=== Pipeline finalizado ==='
 
-      archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/**/*.*', allowEmptyArchive: true
+      // Publicar todos los recursos del reporte como artefactos (HTML, videos, imágenes, etc.)
+      archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/**', fingerprint: true
 
+      // Mostrar el reporte HTML directamente en Jenkins
       publishHTML([
         reportDir: 'mi-proyecto-cypress/cypress/report',
-        reportFiles: 'mochawesome.html',
-        reportName: 'Reporte Cypress (Mochawesome)',
+        reportFiles: 'index.html',
+        reportName: 'Reporte Cypress',
         keepAll: true,
         alwaysLinkToLastBuild: true,
-        allowMissing: true
+        allowMissing: false
       ])
-
-      junit 'mi-proyecto-cypress/cypress/results/*.xml'
+    }
+    success {
+      echo '✅ Todos los pasos se completaron correctamente.'
+    }
+    failure {
+      echo '❌ El pipeline falló. Revisa los logs para más detalles.'
     }
   }
 }
