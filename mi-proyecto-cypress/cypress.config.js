@@ -32,6 +32,19 @@ module.exports = defineConfig({
     setupNodeEvents(on, config) {
       require('cypress-mochawesome-reporter/plugin')(on);
 
+      // 🔧 Crear carpetas necesarias si no existen (para Jenkins)
+      const requiredDirs = [
+        path.join(__dirname, 'cypress/report/videos'),
+        path.join(__dirname, 'cypress/report/screenshots'),
+        path.join(__dirname, 'results')
+      ];
+
+      requiredDirs.forEach(dir => {
+        if (!fs.existsSync(dir)) {
+          fs.mkdirSync(dir, { recursive: true });
+        }
+      });
+
       // Generar reporte JUnit adicional (versión corregida)
       on('after:spec', (spec, results) => {
         if (!results || !results.tests || results.tests.length === 0) return;
