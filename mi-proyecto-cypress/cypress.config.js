@@ -92,7 +92,7 @@ module.exports = defineConfig({
         // === MERGE + HTML (Cypress 15 ya no lo hace solo) ===
         try {
           console.log("🔄 Ejecutando mochawesome-merge...");
-          execSync(`npx mochawesome-merge ${reportDir}/*.json > ${reportDir}/mochawesome.json`, {
+          execSync(`npx mochawesome-merge ${reportDir}/.jsons/*.json > ${reportDir}/mochawesome.json`, {
             stdio: "inherit"
           });
 
