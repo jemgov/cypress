@@ -34,7 +34,7 @@ module.exports = defineConfig({
       const requiredDirs = [
         path.join(__dirname, 'cypress/report/videos'),
         path.join(__dirname, 'cypress/report/screenshots'),
-        path.join(__dirname, 'results')
+        path.join(__dirname, 'cypress/results')
       ];
 
       requiredDirs.forEach(dir => {
@@ -47,7 +47,7 @@ module.exports = defineConfig({
       on('after:spec', (spec, results) => {
         if (!results || !results.tests || results.tests.length === 0) return;
 
-        const junitOutputDir = path.join(__dirname, 'results');
+        const junitOutputDir = path.join(__dirname, 'cypress/results');
         if (!fs.existsSync(junitOutputDir)) {
           fs.mkdirSync(junitOutputDir, { recursive: true });
         }
