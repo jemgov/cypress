@@ -4,15 +4,15 @@ const path = require('path');
 
 module.exports = defineConfig({
 
-  // Reporter principal (Mochawesome usando Mocha interno de Cypress)
+  // Reporter principal (Mochawesome)
   reporter: "cypress-mochawesome-reporter",
   reporterOptions: {
     reportDir: "cypress/report",
     charts: true,
     embeddedScreenshots: true,
     inlineAssets: true,
-    saveJson: true,               // Necesario para que Jenkins genere el HTML
-    reportPageTitle: "Test-Suite"
+    saveJson: true,
+    reportPageTitle: "Test-Suite",
   },
 
   video: true,
@@ -21,19 +21,18 @@ module.exports = defineConfig({
   screenshotsFolder: "cypress/report/screenshots",
 
   env: {
-    url: "https://www.google.es/"
+    url: "https://www.google.es/",
   },
 
   e2e: {
     trashAssetsBeforeRuns: false,
 
     setupNodeEvents(on, config) {
-      // Activar el plugin del reporter
       require('cypress-mochawesome-reporter/plugin')(on);
 
-      // Crear carpetas necesarias
+      // Crear carpetas necesarias para Jenkins
       const requiredDirs = [
-        path.join(__dirname, 'cypress/report'),
+        path.join(__dirname, 'cypress/report'),              // ← Carpeta base añadida
         path.join(__dirname, 'cypress/report/videos'),
         path.join(__dirname, 'cypress/report/screenshots'),
         path.join(__dirname, 'cypress/results')
@@ -45,7 +44,7 @@ module.exports = defineConfig({
         }
       });
 
-      // Generar XML JUnit
+      // 🔧 Generar XML JUnit sin bloquear Cypress
       on('after:spec', (spec, results) => {
         if (!results || !results.tests || results.tests.length === 0) return;
 
@@ -114,6 +113,6 @@ module.exports = defineConfig({
       return config;
     },
 
-    baseUrl: "https://example.cypress.io/"
-  }
+    baseUrl: "https://example.cypress.io/",
+  },
 });
