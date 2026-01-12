@@ -36,13 +36,13 @@ pipeline {
     stage('Ejecutar pruebas Cypress') {
       steps {
         dir('mi-proyecto-cypress') {
-          powershell '''
-            echo "=== Ejecutando pruebas Cypress ==="
-            echo "TEST_SPEC = ${TEST_SPEC}"
+          powershell """
+            echo '=== Ejecutando pruebas Cypress ==='
+            echo 'TEST_SPEC = ${params.TEST_SPEC}'
 
-            # IMPORTANTE: usar comillas simples para evitar que PowerShell destruya el patrón
-            npx cypress run --spec '${TEST_SPEC}'
-          '''
+            # Ejecutar Cypress con el patrón interpolado por Groovy
+            npx cypress run --spec \"${params.TEST_SPEC}\"
+          """
         }
       }
     }
