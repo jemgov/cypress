@@ -54,7 +54,7 @@ pipeline {
             echo "=== Generando reporte HTML ==="
 
             if (Test-Path "cypress/report/.jsons/*.json") {
-              npx mochawesome-merge cypress/report/.jsons/*.json > cypress/report/mochawesome.json
+              npx mochawesome-merge cypress/report/.jsons/*.json -o cypress/report/mochawesome.json
               npx marge cypress/report/mochawesome.json --reportDir cypress/report/html
             }
             else {
