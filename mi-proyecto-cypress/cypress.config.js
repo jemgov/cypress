@@ -13,6 +13,9 @@ module.exports = defineConfig({
     inlineAssets: true,
     saveJson: true,
     reportPageTitle: "Test-Suite",
+
+    // 🔥 CLAVE: nombres únicos por spec para evitar conflicto con mochawesome.json
+    reportFilename: "[name]-report"
   },
 
   video: true,
