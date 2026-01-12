@@ -44,49 +44,44 @@ pipeline {
         }
       }
     }
-
-    stage('Generar reporte HTML Mochawesome') {
-      steps {
-        dir('mi-proyecto-cypress') {
-          powershell '''
-            echo "=== Verificando JSONs ==="
-            if (!(Test-Path "cypress/report/.jsons")) {
-              echo "No existe la carpeta .jsons"
-              exit 0
-            }
-
-            $jsonFiles = Get-ChildItem "cypress/report/.jsons" -Filter *.json
-            if ($jsonFiles.Count -eq 0) {
-              echo "No hay JSONs para fusionar. Saltando marge."
-              exit 0
-            }
-
-            echo "=== Fusionando JSONs con mochawesome-merge ==="
-            npx mochawesome-merge cypress/report/.jsons/*.json -o cypress/report/mochawesome.json
-
-            echo "=== Verificando mochawesome.json ==="
-            if (!(Test-Path "cypress/report/mochawesome.json")) {
-              echo "No se generó mochawesome.json"
-              exit 1
-            }
-
-            echo "=== Generando HTML con marge ==="
-            if (!(Test-Path "cypress/report/html")) {
-              New-Item -ItemType Directory -Force -Path "cypress/report/html" | Out-Null
-            }
-
-            npx marge cypress/report/mochawesome.json --reportDir cypress/report/html --reportFilename mochawesome.html --inline --overwrite
-
-            echo "=== Verificando HTML generado ==="
-            Get-ChildItem "cypress/report/html"
-          '''
-        }
-      }
-    }
   }
 
   post {
     always {
+      dir('mi-proyecto-cypress') {
+        powershell '''
+          echo "=== Verificando JSONs ==="
+          if (!(Test-Path "cypress/report/.jsons")) {
+            echo "No existe la carpeta .jsons"
+            exit 0
+          }
+
+          $jsonFiles = Get-ChildItem "cypress/report/.jsons" -Filter *.json
+          if ($jsonFiles.Count -eq 0) {
+            echo "No hay JSONs para fusionar. Saltando marge."
+            exit 0
+          }
+
+          echo "=== Fusionando JSONs con mochawesome-merge ==="
+          npx mochawesome-merge cypress/report/.jsons/*.json -o cypress/report/mochawesome.json
+
+          echo "=== Verificando mochawesome.json ==="
+          if (!(Test-Path "cypress/report/mochawesome.json")) {
+            echo "No se generó mochawesome.json"
+            exit 1
+          }
+
+          echo "=== Generando HTML con marge ==="
+          if (!(Test-Path "cypress/report/html")) {
+            New-Item -ItemType Directory -Force -Path "cypress/report/html" | Out-Null
+          }
+
+          npx marge cypress/report/mochawesome.json --reportDir cypress/report/html --reportFilename mochawesome.html --inline --overwrite
+
+          echo "=== Verificando HTML generado ==="
+          Get-ChildItem "cypress/report/html"
+        '''
+      }
 
       archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/**/*.*', allowEmptyArchive: true
 
