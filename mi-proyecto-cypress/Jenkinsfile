@@ -4,7 +4,7 @@ pipeline {
     parameters {
         string(
             name: 'TEST_SPEC',
-            defaultValue: 'cypress/e2e/**/*.cy.js',
+            defaultValue: 'cypress/e2e/1-getting-started/*.cy.js',
             description: 'Ruta de los tests Cypress a ejecutar'
         )
     }
@@ -15,9 +15,21 @@ pipeline {
 
     stages {
 
+        stage('Verificar instalación Cypress') {
+            steps {
+                bat 'npx cypress verify'
+            }
+        }
+
         stage('Instalar dependencias') {
             steps {
                 bat 'npm ci'
+            }
+        }
+
+        stage('Mostrar patrón TEST_SPEC') {
+            steps {
+                bat "echo TEST_SPEC = ${params.TEST_SPEC}"
             }
         }
 
@@ -31,20 +43,20 @@ pipeline {
     post {
         always {
 
-            // 📌 Publicar resultados JUnit generados en mi-proyecto-cypress/results/
-            junit 'mi-proyecto-cypress/results/*.xml'
+            // Publicar resultados JUnit generados en results/
+            junit 'results/*.xml'
 
-            // 📌 Guardar reportes JUnit como artefactos
-            archiveArtifacts artifacts: 'mi-proyecto-cypress/results/*.xml', fingerprint: true
+            // Guardar reportes JUnit como artefactos
+            archiveArtifacts artifacts: 'results/*.xml', fingerprint: true
 
-            // 📌 Guardar videos generados por Cypress
-            archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/videos/**/*.mp4', fingerprint: true
+            // Guardar videos generados por Cypress
+            archiveArtifacts artifacts: 'cypress/report/videos/**/*.mp4', fingerprint: true
 
-            // 📌 Guardar screenshots generados por Cypress
-            archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/screenshots/**/*.png', fingerprint: true
+            // Guardar screenshots generados por Cypress
+            archiveArtifacts artifacts: 'cypress/report/screenshots/**/*.png', fingerprint: true
 
-            // 📌 Guardar reportes Mochawesome (HTML + JSON)
-            archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/**/*.*', fingerprint: true
+            // Guardar reportes Mochawesome (HTML + JSON)
+            archiveArtifacts artifacts: 'cypress/report/**/*.*', fingerprint: true
         }
     }
 }
