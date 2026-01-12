@@ -52,7 +52,7 @@ pipeline {
             npx mochawesome-merge cypress/report/.jsons/*.json -o cypress/report/mochawesome.json
 
             echo "=== Generando HTML final ==="
-            npx marge cypress/report/mochawesome.json --reportDir cypress/report/html
+            npx marge cypress/report/mochawesome.json --reportDir cypress/report/html --reportFilename mochawesome.html --inline --overwrite
           '''
         }
       }
