@@ -1,6 +1,7 @@
 const { defineConfig } = require("cypress");
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require("child_process");   // <-- añadido para ejecutar comandos
 
 module.exports = defineConfig({
 
@@ -84,6 +85,29 @@ module.exports = defineConfig({
         }
 
         console.log('Screenshots de esta ejecución guardadas automáticamente en screenshots_backup');
+
+        // ============================================================
+        // === GENERAR REPORTE MOCHAWESOME AUTOMÁTICAMENTE ============
+        // ============================================================
+        try {
+          console.log("=== Fusionando JSON de Mochawesome ===");
+          execSync(
+            `cmd /c "npx mochawesome-merge cypress/report/.jsons/*.json > mochawesome.json"`,
+            { stdio: "inherit" }
+          );
+
+          console.log("=== Generando HTML de Mochawesome ===");
+          execSync(
+            `npx marge mochawesome.json --reportDir cypress/report --inline`,
+            { stdio: "inherit" }
+          );
+
+          console.log("✅ Reporte HTML generado automáticamente en cypress/report/index.html");
+        } catch (error) {
+          console.error("⚠️ Error generando el reporte Mochawesome:", error);
+        }
+        // ============================================================
+
       });
 
       return config;
