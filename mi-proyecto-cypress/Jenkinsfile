@@ -1,63 +1,94 @@
 pipeline {
-    agent any
+  agent any
+  tools {
+    nodejs "NodeJS 25"
+  }
 
-    parameters {
-        string(
-            name: 'TEST_SPEC',
-            defaultValue: 'cypress/e2e/1-getting-started/*.cy.js',
-            description: 'Ruta de los tests Cypress a ejecutar'
-        )
+  parameters {
+    string(
+      name: 'TEST_SPEC',
+      defaultValue: 'e2e/1-getting-started/*.cy.js',
+      description: 'Ruta del test o tests a ejecutar'
+    )
+  }
+
+  stages {
+
+    stage('Instalar dependencias') {
+      steps {
+        timeout(time: 5, unit: 'MINUTES') {
+          dir('mi-proyecto-cypress') {
+            powershell '''
+            Write-Host "=== Iniciando instalación de dependencias ==="
+            npm install
+            Write-Host "=== npm install finalizado ==="
+            '''
+          }
+        }
+      }
     }
 
-    environment {
-        CYPRESS_CACHE_FOLDER = '.cache/Cypress'
+    stage('Ejecutar pruebas') {
+      steps {
+        timeout(time: 10, unit: 'MINUTES') {
+          dir('mi-proyecto-cypress') {
+            powershell '''
+            Write-Host "=== Ejecutando pruebas Cypress ==="
+            npx cypress run --spec "$env:TEST_SPEC"
+            Write-Host "=== Cypress finalizado ==="
+            '''
+          }
+        }
+      }
     }
 
-    stages {
+    stage('Generar reporte') {
+      steps {
+        dir('mi-proyecto-cypress') {
+          powershell '''
+          Write-Host "=== Generando reporte HTML ==="
 
-        stage('Verificar instalación Cypress') {
-            steps {
-                bat 'npx cypress verify'
+          try {
+            $jsonFiles = Get-ChildItem -Path cypress/report -Filter *.json
+            if ($jsonFiles.Count -eq 0) {
+              Write-Host "⚠️ No se encontraron archivos JSON para fusionar. Se omite la generación del reporte."
+              exit 0
             }
-        }
 
-        stage('Instalar dependencias') {
-            steps {
-                bat 'npm ci'
+            $json = npx mochawesome-merge cypress/report/*.json
+            if (-not $json -or $json.Contains('"results": []')) {
+              Write-Host "⚠️ El contenido fusionado está vacío. No se generará el HTML."
+              exit 0
             }
-        }
 
-        stage('Mostrar patrón TEST_SPEC') {
-            steps {
-                bat "echo TEST_SPEC = ${params.TEST_SPEC}"
-            }
-        }
+            $json | Set-Content -Encoding utf8NoBOM mochawesome.json
+            npx marge mochawesome.json --reportDir cypress/report --inline
+            Write-Host "✅ Reporte generado en cypress/report/index.html"
+          } catch {
+            Write-Host "⚠️ Error durante la generación del reporte, pero no se detendrá el pipeline."
+          }
 
-        stage('Ejecutar tests Cypress') {
-            steps {
-                // EJECUCIÓN ESTABLE EN WINDOWS
-                bat "npx cypress run --browser chrome --headless --spec \"${params.TEST_SPEC}\""
-            }
+          exit 0
+          '''
         }
+      }
     }
+  }
 
-    post {
-        always {
+  post {
+    always {
+      echo '=== Pipeline finalizado ==='
 
-            // Publicar resultados JUnit generados en results/
-            junit 'results/*.xml'
+      archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/**', fingerprint: true
 
-            // Guardar reportes JUnit como artefactos
-            archiveArtifacts artifacts: 'results/*.xml', fingerprint: true
-
-            // Guardar videos generados por Cypress
-            archiveArtifacts artifacts: 'cypress/report/videos/**/*.mp4', fingerprint: true
-
-            // Guardar screenshots generados por Cypress
-            archiveArtifacts artifacts: 'cypress/report/screenshots/**/*.png', fingerprint: true
-
-            // Guardar reportes Mochawesome (HTML + JSON)
-            archiveArtifacts artifacts: 'cypress/report/**/*.*', fingerprint: true
-        }
+      publishHTML([
+        reportDir: 'mi-proyecto-cypress/cypress/report',
+        reportFiles: 'index.html',
+        reportName: 'Reporte Cypress',
+        keepAll: true,
+        alwaysLinkToLastBuild: true,
+        allowMissing: false
+      ])
     }
+  }
 }
