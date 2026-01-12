@@ -14,7 +14,10 @@ module.exports = defineConfig({
     saveJson: true,
     reportPageTitle: "Test-Suite",
 
-    // 🔥 CLAVE: nombres únicos por spec para evitar conflicto con mochawesome.json
+    // 🔥 CLAVE: activar generación de HTML
+    saveHtml: true,
+
+    // Mantener nombres únicos por spec
     reportFilename: "[name]-report"
   },
 
@@ -35,7 +38,7 @@ module.exports = defineConfig({
 
       // Crear carpetas necesarias para Jenkins
       const requiredDirs = [
-        path.join(__dirname, 'cypress/report'),              // ← Carpeta base añadida
+        path.join(__dirname, 'cypress/report'),
         path.join(__dirname, 'cypress/report/videos'),
         path.join(__dirname, 'cypress/report/screenshots'),
         path.join(__dirname, 'cypress/results')
