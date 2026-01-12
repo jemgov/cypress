@@ -26,6 +26,12 @@ pipeline {
             echo "=== Instalando dependencias ==="
             npm install
 
+            echo "=== Instalando reporter (forzado) ==="
+            npm install cypress-mochawesome-reporter --save-dev
+
+            echo "=== Verificando reporter instalado ==="
+            npm list cypress-mochawesome-reporter || echo "❌ Reporter NO instalado"
+
             echo "=== Instalando binario de Cypress ==="
             npx cypress install
           '''
@@ -40,6 +46,7 @@ pipeline {
             echo '=== Ejecutando pruebas Cypress ==='
             echo 'TEST_SPEC = ${params.TEST_SPEC}'
 
+            echo '=== Lanzando Cypress ==='
             npx cypress run --spec "${params.TEST_SPEC}"
           """
         }
@@ -49,6 +56,8 @@ pipeline {
 
   post {
     always {
+      echo "=== Publicando artefactos ==="
+
       archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/**/*.*', allowEmptyArchive: true
 
       publishHTML([
