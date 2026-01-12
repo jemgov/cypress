@@ -4,21 +4,15 @@ const path = require('path');
 
 module.exports = defineConfig({
 
-  // Reporter principal (Mochawesome)
-  reporter: "cypress-mochawesome-reporter",
+  // Reporter principal (Mochawesome puro)
+  reporter: "mochawesome",
   reporterOptions: {
-    reportDir: "cypress/report",
-    charts: true,
-    embeddedScreenshots: true,
-    inlineAssets: true,
-    saveJson: true,
-    reportPageTitle: "Test-Suite",
-
-    // 🔥 CLAVE: activar generación de HTML
-    saveHtml: true,
-
-    // Mantener nombres únicos por spec
-    reportFilename: "[name]-report"
+    // Guardamos los JSON individuales en .jsons
+    reportDir: "cypress/report/.jsons",
+    overwrite: false,
+    html: false,   // 🔹 Solo JSON aquí
+    json: true,
+    reportFilename: "mochawesome_[name]" // nombres únicos por spec
   },
 
   video: true,
@@ -34,7 +28,8 @@ module.exports = defineConfig({
     trashAssetsBeforeRuns: false,
 
     setupNodeEvents(on, config) {
-      require('cypress-mochawesome-reporter/plugin')(on);
+      // 🔹 Ya no usamos el plugin de cypress-mochawesome-reporter
+      // require('cypress-mochawesome-reporter/plugin')(on);
 
       // Crear carpetas necesarias para Jenkins
       const requiredDirs = [
