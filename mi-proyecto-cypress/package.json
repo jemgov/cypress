@@ -3,6 +3,16 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "cy:run": "npx cypress run",
+
+    "report:merge": "cmd /c \"npx mochawesome-merge cypress/report/.jsons/*.json > mochawesome.json\"",
+
+    "report:html": "npx marge mochawesome.json --reportDir cypress/report --inline",
+
+    "report": "npm run report:merge && npm run report:html",
+
+    "test:full": "npm run cy:run && npm run report",
+
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
