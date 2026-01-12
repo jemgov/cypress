@@ -5,6 +5,6 @@ describe("Función rightclick",() =>{
 
     cy.get('.rightclick-action-div').rightclick()
     cy.get('.rightclick-action-div').should('not.be.visible')
-    cy.get('.rightclick-action-input-hidden').should('be.visible')
+    cy.get('.rightclic-action-input-hidden').should('be.visible')
   })
 })
