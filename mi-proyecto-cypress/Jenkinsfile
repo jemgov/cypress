@@ -40,11 +40,10 @@ pipeline {
             echo '=== Ejecutando pruebas Cypress ==='
             echo 'TEST_SPEC = ${params.TEST_SPEC}'
 
-            echo '=== Verificando configuración Cypress ==='
-            npx cypress info
-
-            echo '=== Lanzando Cypress con config forzado ==='
-            npx cypress run --config-file cypress.config.js --spec \"${params.TEST_SPEC}\"
+            echo '=== Forzando configuración desde línea de comandos ==='
+            npx cypress run ^
+              --config reporter=cypress-mochawesome-reporter,reporterOptions='{\"reportDir\":\"cypress/report\",\"saveHtml\":true,\"embeddedScreenshots\":true,\"inlineAssets\":true,\"charts\":true,\"reportPageTitle\":\"Test-Suite\"}',videosFolder=cypress/report/videos,screenshotsFolder=cypress/report/screenshots ^
+              --spec \"${params.TEST_SPEC}\"
           """
         }
       }
