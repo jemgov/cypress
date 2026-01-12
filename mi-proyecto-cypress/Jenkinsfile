@@ -39,8 +39,6 @@ pipeline {
           powershell """
             echo '=== Ejecutando pruebas Cypress ==='
             echo 'TEST_SPEC = ${params.TEST_SPEC}'
-
-            # Ejecutar Cypress con el patrón interpolado por Groovy
             npx cypress run --spec \"${params.TEST_SPEC}\"
           """
         }
@@ -51,10 +49,10 @@ pipeline {
       steps {
         dir('mi-proyecto-cypress') {
           powershell '''
-            echo "=== Fusionando JSON de Mochawesome ==="
-
-            if (!(Test-Path "cypress/report/html")) {
-              New-Item -ItemType Directory -Force -Path "cypress/report/html" | Out-Null
+            echo "=== Verificando JSONs ==="
+            if (!(Test-Path "cypress/report/.jsons")) {
+              echo "No existe la carpeta .jsons"
+              exit 0
             }
 
             $jsonFiles = Get-ChildItem "cypress/report/.jsons" -Filter *.json
@@ -63,10 +61,24 @@ pipeline {
               exit 0
             }
 
+            echo "=== Fusionando JSONs con mochawesome-merge ==="
             npx mochawesome-merge cypress/report/.jsons/*.json -o cypress/report/mochawesome.json
 
-            echo "=== Generando HTML final ==="
+            echo "=== Verificando mochawesome.json ==="
+            if (!(Test-Path "cypress/report/mochawesome.json")) {
+              echo "No se generó mochawesome.json"
+              exit 1
+            }
+
+            echo "=== Generando HTML con marge ==="
+            if (!(Test-Path "cypress/report/html")) {
+              New-Item -ItemType Directory -Force -Path "cypress/report/html" | Out-Null
+            }
+
             npx marge cypress/report/mochawesome.json --reportDir cypress/report/html --reportFilename mochawesome.html --inline --overwrite
+
+            echo "=== Verificando HTML generado ==="
+            Get-ChildItem "cypress/report/html"
           '''
         }
       }
