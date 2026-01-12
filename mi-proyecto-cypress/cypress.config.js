@@ -16,6 +16,7 @@ module.exports = defineConfig({
     inlineAssets: true,
     saveJson: true,
     reportPageTitle: "Test-Suite",
+    html: false,
   },
 
   video: true,  //activa la captura de videos
