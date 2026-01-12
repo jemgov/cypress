@@ -49,7 +49,7 @@ pipeline {
         dir('mi-proyecto-cypress') {
           powershell '''
             echo "=== Fusionando JSON de Mochawesome ==="
-            npx mochawesome-merge cypress/report/*.json -o cypress/report/mochawesome.json
+            npx mochawesome-merge cypress/report/.jsons/*.json -o cypress/report/mochawesome.json
 
             echo "=== Generando HTML final ==="
             npx marge cypress/report/mochawesome.json --reportDir cypress/report/html
@@ -69,7 +69,8 @@ pipeline {
         reportFiles: 'mochawesome.html',
         reportName: 'Reporte Cypress (Mochawesome)',
         keepAll: true,
-        alwaysLinkToLastBuild: true
+        alwaysLinkToLastBuild: true,
+        allowMissing: false
       ])
 
       junit 'mi-proyecto-cypress/cypress/results/*.xml'
