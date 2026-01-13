@@ -23,7 +23,7 @@ module.exports = defineConfig({
   video: true,  //activa la captura de videos
   videosFolder: "cypress/report/videos",   //ruta de los videos
   screenshotOnRunFailure: true,  //activa las capturas de pantalla
-  screenshotsFolder: "cypress/report/screenshots",    //ruta de las capturas (Cypress la ignorará en CI)
+  screenshotsFolder: "cypress/report/screenshots",    //ruta deseada (Cypress la ignorará en CI)
 
   //Aquí añadimos correctamente el bloque "env" Para utilizar la variable: Cypress.env('url')
   env: {
@@ -58,7 +58,7 @@ module.exports = defineConfig({
 
         console.log('Videos de esta ejecución guardados automáticamente en videos_backup');
 
-        // ---- BACKUP SCREENSHOTS ----
+        // ---- BACKUP + MOVER SCREENSHOTS ----
         const realScreenshots = path.join(__dirname, "cypress/screenshots");
         const reportScreenshots = path.join(__dirname, "cypress/report/screenshots");
         const backupScreenshotsDir = path.join(__dirname, 'screenshots_backup');
@@ -113,16 +113,23 @@ module.exports = defineConfig({
         }
 
         // ============================================================
-        // === ELIMINAR mochawesome*.html NO DESEADOS ==================
+        // === ELIMINAR mochawesome*.html EN TODA LA CARPETA REPORT ===
         // ============================================================
-        const reportDir = path.join(__dirname, "cypress/report");
+        const deleteUnwantedHtml = (dir) => {
+          fs.readdirSync(dir).forEach(file => {
+            const fullPath = path.join(dir, file);
+            const stat = fs.statSync(fullPath);
 
-        fs.readdirSync(reportDir).forEach(file => {
-          if (file.startsWith("mochawesome") && file.endsWith(".html") && file !== "index.html") {
-            fs.unlinkSync(path.join(reportDir, file));
-            console.log(`🧹 Eliminado HTML no deseado: ${file}`);
-          }
-        });
+            if (stat.isDirectory()) {
+              deleteUnwantedHtml(fullPath); // Recursivo
+            } else if (file.startsWith("mochawesome") && file.endsWith(".html") && file !== "index.html") {
+              fs.unlinkSync(fullPath);
+              console.log(`🧹 Eliminado HTML no deseado: ${fullPath}`);
+            }
+          });
+        };
+
+        deleteUnwantedHtml(path.join(__dirname, "cypress/report"));
 
       });
 
