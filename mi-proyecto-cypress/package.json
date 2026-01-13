@@ -4,15 +4,10 @@
   "main": "index.js",
   "scripts": {
     "cy:run": "npx cypress run",
-
     "report:merge": "cmd /c \"npx mochawesome-merge cypress/report/.jsons/*.json > mochawesome.json\"",
-
     "report:html": "npx marge mochawesome.json --reportDir cypress/report --inline",
-
     "report": "npm run report:merge && npm run report:html",
-
     "test:full": "npm run cy:run && npm run report",
-
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -20,8 +15,8 @@
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@shelex/cypress-allure-plugin": "^2.41.2",
     "cypress": "^15.8.2",
-    "cypress-mochawesome-reporter": "^3.8.2",
-    "mocha-junit-reporter": "^2.2.1"
+    "cypress-mochawesome-reporter": "^3.8.2"
   }
 }

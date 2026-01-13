@@ -1,43 +1,46 @@
 const { defineConfig } = require("cypress");
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require("child_process");   // <-- necesario para ejecutar comandos
+const { execSync } = require("child_process");
 
 module.exports = defineConfig({
 
-  //reportes con mocha
+  // === REPORTER PRINCIPAL (Mochawesome) ===
   reporter: "cypress-mochawesome-reporter",
   reporterOptions: {
-    //carpeta donde se guardarán los reportes
     reportDir: "cypress/report",
-    //algunas opciones visuales
     charts: true,
     embeddedScreenshots: true,
     inlineAssets: true,
     saveJson: true,
-    json: true,   // <-- genera un JSON por cada spec
+    json: true,
     reportPageTitle: "Test-Suite",
-    html: false   // <-- evita mochawesome.html, aunque el plugin a veces lo ignora
+    html: false
   },
 
-  video: true,  //activa la captura de videos
-  videosFolder: "cypress/report/videos",   //ruta de los videos
-  screenshotOnRunFailure: true,  //activa las capturas de pantalla
-  screenshotsFolder: "cypress/report/screenshots",    //ruta deseada (Cypress la ignorará en CI)
+  // === CONFIGURACIÓN DE VIDEOS Y SCREENSHOTS ===
+  video: true,
+  videosFolder: "cypress/report/videos",
+  screenshotOnRunFailure: true,
+  screenshotsFolder: "cypress/report/screenshots",
 
-  //Aquí añadimos correctamente el bloque "env" Para utilizar la variable: Cypress.env('url')
   env: {
-    url: "https://www.google.es/", //variable de entorno personalizada
+    url: "https://www.google.es/",
   },
 
   e2e: {
-    trashAssetsBeforeRuns: false,  // No elimina videos/capturas al iniciar ejecución
+    trashAssetsBeforeRuns: false,
 
     setupNodeEvents(on, config) {
+
+      // === ACTIVAR MOCHAWESOME ===
       require('cypress-mochawesome-reporter/plugin')(on);
 
-      // Hook que se ejecuta después de cada run
-      on('after:run', (results) => {
+      // === ACTIVAR ALLURE ===
+      require('@shelex/cypress-allure-plugin/writer')(on, config);
+
+      // === POST-EJECUCIÓN (BACKUPS + MOCHAWESOME) ===
+      on('after:run', () => {
 
         // ---- BACKUP VIDEOS ----
         const videosDir = path.join(__dirname, 'cypress/report/videos');
@@ -47,7 +50,6 @@ module.exports = defineConfig({
           fs.mkdirSync(backupVideosDir, { recursive: true });
         }
 
-        // Copiar en vez de mover para que Jenkins pueda archivar los videos
         if (fs.existsSync(videosDir)) {
           fs.readdirSync(videosDir).forEach(file => {
             const srcPath = path.join(videosDir, file);
@@ -56,9 +58,7 @@ module.exports = defineConfig({
           });
         }
 
-        console.log('Videos de esta ejecución guardados automáticamente en videos_backup');
-
-        // ---- BACKUP + MOVER SCREENSHOTS ----
+        // ---- BACKUP + COPIA SCREENSHOTS ----
         const realScreenshots = path.join(__dirname, "cypress/screenshots");
         const reportScreenshots = path.join(__dirname, "cypress/report/screenshots");
         const backupScreenshotsDir = path.join(__dirname, 'screenshots_backup');
@@ -70,72 +70,54 @@ module.exports = defineConfig({
           fs.mkdirSync(backupScreenshotsDir, { recursive: true });
         }
 
-        // Cypress SIEMPRE genera screenshots en /cypress/screenshots en CI
         if (fs.existsSync(realScreenshots)) {
-          const files = fs.readdirSync(realScreenshots);
-
-          files.forEach(file => {
+          fs.readdirSync(realScreenshots).forEach(file => {
             const srcPath = path.join(realScreenshots, file);
 
-            // Copia a report/screenshots
             const destReport = path.join(reportScreenshots, `${Date.now()}_${file}`);
             fs.copyFileSync(srcPath, destReport);
 
-            // Copia a screenshots_backup
             const destBackup = path.join(backupScreenshotsDir, `${Date.now()}_${file}`);
             fs.copyFileSync(srcPath, destBackup);
           });
-
-          console.log("📸 Screenshots movidas a cypress/report/screenshots y copiadas a screenshots_backup");
-        } else {
-          console.log('⚠️ Cypress no generó carpeta /cypress/screenshots');
         }
 
-        // ============================================================
-        // === GENERAR REPORTE MOCHAWESOME AUTOMÁTICAMENTE ============
-        // ============================================================
+        // === GENERAR REPORTE MOCHAWESOME ===
         try {
-          console.log("=== Fusionando JSON de Mochawesome ===");
           execSync(
             `cmd /c "npx mochawesome-merge cypress/report/.jsons/*.json > cypress/report/mochawesome.json"`,
             { stdio: "inherit" }
           );
 
-          console.log("=== Generando HTML de Mochawesome ===");
           execSync(
             `npx marge cypress/report/mochawesome.json --reportDir cypress/report --inline --reportFilename index.html`,
             { stdio: "inherit" }
           );
 
-          console.log("✅ Reporte HTML generado automáticamente en cypress/report/index.html");
         } catch (error) {
-          console.error("⚠️ Error generando el reporte Mochawesome:", error);
+          console.error("⚠️ Error generando Mochawesome:", error);
         }
 
-        // ============================================================
-        // === ELIMINAR mochawesome*.html EN TODA LA CARPETA REPORT ===
-        // ============================================================
+        // === ELIMINAR HTMLS NO DESEADOS ===
         const deleteUnwantedHtml = (dir) => {
           fs.readdirSync(dir).forEach(file => {
             const fullPath = path.join(dir, file);
             const stat = fs.statSync(fullPath);
 
             if (stat.isDirectory()) {
-              deleteUnwantedHtml(fullPath); // Recursivo
+              deleteUnwantedHtml(fullPath);
             } else if (file.startsWith("mochawesome") && file.endsWith(".html") && file !== "index.html") {
               fs.unlinkSync(fullPath);
-              console.log(`🧹 Eliminado HTML no deseado: ${fullPath}`);
             }
           });
         };
 
         deleteUnwantedHtml(path.join(__dirname, "cypress/report"));
-
       });
 
       return config;
     },
 
-    baseUrl: "https://example.cypress.io/", //URL base para las pruebas E2E
+    baseUrl: "https://example.cypress.io/",
   },
 });
