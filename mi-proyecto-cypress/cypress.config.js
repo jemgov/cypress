@@ -23,7 +23,7 @@ module.exports = defineConfig({
   video: true,  //activa la captura de videos
   videosFolder: "cypress/report/videos",   //ruta de los videos
   screenshotOnRunFailure: true,  //activa las capturas de pantalla
-  screenshotsFolder: "cypress/report/screenshots",    //ruta de las capturas
+  screenshotsFolder: "cypress/report/screenshots",    //ruta de las capturas (Cypress la ignorará en CI)
 
   //Aquí añadimos correctamente el bloque "env" Para utilizar la variable: Cypress.env('url')
   env: {
@@ -59,27 +59,36 @@ module.exports = defineConfig({
         console.log('Videos de esta ejecución guardados automáticamente en videos_backup');
 
         // ---- BACKUP SCREENSHOTS ----
-        const screenshotsDir = path.join(__dirname, 'cypress/report/screenshots');
+        const realScreenshots = path.join(__dirname, "cypress/screenshots");
+        const reportScreenshots = path.join(__dirname, "cypress/report/screenshots");
         const backupScreenshotsDir = path.join(__dirname, 'screenshots_backup');
 
+        if (!fs.existsSync(reportScreenshots)) {
+          fs.mkdirSync(reportScreenshots, { recursive: true });
+        }
         if (!fs.existsSync(backupScreenshotsDir)) {
           fs.mkdirSync(backupScreenshotsDir, { recursive: true });
         }
 
-        if (fs.existsSync(screenshotsDir)) {
-          const files = fs.readdirSync(screenshotsDir);
-          if (files.length > 0) {
-            files.forEach(file => {
-              const srcPath = path.join(screenshotsDir, file);
-              const destPath = path.join(backupScreenshotsDir, `${Date.now()}_${file}`);
-              fs.copyFileSync(srcPath, destPath);
-            });
-            console.log('Screenshots de esta ejecución guardadas automáticamente en screenshots_backup');
-          } else {
-            console.log('⚠️ No se encontraron screenshots para mover.');
-          }
+        // Cypress SIEMPRE genera screenshots en /cypress/screenshots en CI
+        if (fs.existsSync(realScreenshots)) {
+          const files = fs.readdirSync(realScreenshots);
+
+          files.forEach(file => {
+            const srcPath = path.join(realScreenshots, file);
+
+            // Copia a report/screenshots
+            const destReport = path.join(reportScreenshots, `${Date.now()}_${file}`);
+            fs.copyFileSync(srcPath, destReport);
+
+            // Copia a screenshots_backup
+            const destBackup = path.join(backupScreenshotsDir, `${Date.now()}_${file}`);
+            fs.copyFileSync(srcPath, destBackup);
+          });
+
+          console.log("📸 Screenshots movidas a cypress/report/screenshots y copiadas a screenshots_backup");
         } else {
-          console.log('⚠️ Carpeta de screenshots no existe. No hay capturas que guardar.');
+          console.log('⚠️ Cypress no generó carpeta /cypress/screenshots');
         }
 
         // ============================================================
@@ -104,14 +113,16 @@ module.exports = defineConfig({
         }
 
         // ============================================================
-        // === ELIMINAR mochawesome.html SI EL PLUGIN LO GENERA =======
+        // === ELIMINAR mochawesome*.html NO DESEADOS ==================
         // ============================================================
-        const unwantedHtml = path.join(__dirname, "cypress/report/mochawesome.html");
-        if (fs.existsSync(unwantedHtml)) {
-          fs.unlinkSync(unwantedHtml);
-          console.log("🧹 mochawesome.html eliminado automáticamente");
-        }
-        // ============================================================
+        const reportDir = path.join(__dirname, "cypress/report");
+
+        fs.readdirSync(reportDir).forEach(file => {
+          if (file.startsWith("mochawesome") && file.endsWith(".html") && file !== "index.html") {
+            fs.unlinkSync(path.join(reportDir, file));
+            console.log(`🧹 Eliminado HTML no deseado: ${file}`);
+          }
+        });
 
       });
 
