@@ -15,9 +15,9 @@ module.exports = defineConfig({
     embeddedScreenshots: true,
     inlineAssets: true,
     saveJson: true,
-    json: true,   // <-- NUEVO: genera un JSON por cada spec
+    json: true,   // <-- genera un JSON por cada spec
     reportPageTitle: "Test-Suite",
-    html: false   // <-- evita mochawesome.html
+    html: false   // <-- evita mochawesome.html, aunque el plugin a veces lo ignora
   },
 
   video: true,  //activa la captura de videos
@@ -47,12 +47,12 @@ module.exports = defineConfig({
           fs.mkdirSync(backupVideosDir, { recursive: true });
         }
 
-        // Cambio importante: copiar en vez de mover para que Jenkins pueda archivar los videos
+        // Copiar en vez de mover para que Jenkins pueda archivar los videos
         if (fs.existsSync(videosDir)) {
           fs.readdirSync(videosDir).forEach(file => {
             const srcPath = path.join(videosDir, file);
             const destPath = path.join(backupVideosDir, `${Date.now()}_${file}`);
-            fs.copyFileSync(srcPath, destPath); // antes: renameSync
+            fs.copyFileSync(srcPath, destPath);
           });
         }
 
@@ -72,7 +72,7 @@ module.exports = defineConfig({
             files.forEach(file => {
               const srcPath = path.join(screenshotsDir, file);
               const destPath = path.join(backupScreenshotsDir, `${Date.now()}_${file}`);
-              fs.copyFileSync(srcPath, destPath); // antes: renameSync
+              fs.copyFileSync(srcPath, destPath);
             });
             console.log('Screenshots de esta ejecución guardadas automáticamente en screenshots_backup');
           } else {
@@ -81,8 +81,6 @@ module.exports = defineConfig({
         } else {
           console.log('⚠️ Carpeta de screenshots no existe. No hay capturas que guardar.');
         }
-
-        console.log('Screenshots de esta ejecución guardadas automáticamente en screenshots_backup');
 
         // ============================================================
         // === GENERAR REPORTE MOCHAWESOME AUTOMÁTICAMENTE ============
@@ -103,6 +101,15 @@ module.exports = defineConfig({
           console.log("✅ Reporte HTML generado automáticamente en cypress/report/index.html");
         } catch (error) {
           console.error("⚠️ Error generando el reporte Mochawesome:", error);
+        }
+
+        // ============================================================
+        // === ELIMINAR mochawesome.html SI EL PLUGIN LO GENERA =======
+        // ============================================================
+        const unwantedHtml = path.join(__dirname, "cypress/report/mochawesome.html");
+        if (fs.existsSync(unwantedHtml)) {
+          fs.unlinkSync(unwantedHtml);
+          console.log("🧹 mochawesome.html eliminado automáticamente");
         }
         // ============================================================
 
