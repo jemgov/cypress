@@ -15,17 +15,15 @@ module.exports = defineConfig({
     embeddedScreenshots: true,
     inlineAssets: true,
     saveJson: true,
+    json: true,   // <-- NUEVO: genera un JSON por cada spec
     reportPageTitle: "Test-Suite",
-    html: false,
+    html: false   // <-- evita mochawesome.html
   },
 
   video: true,  //activa la captura de videos
   videosFolder: "cypress/report/videos",   //ruta de los videos
   screenshotOnRunFailure: true,  //activa las capturas de pantalla
   screenshotsFolder: "cypress/report/screenshots",    //ruta de las capturas
-  //videoCompression: true, //activa la comprensión de video
-  //trashAssetsBeforeRuns: true   //elimina los videos de las pruebas exitosas para ahorrar espacio en disco
-  //Nota: trashAssetsBeforeRuns se debe definir dentro del bloque 'e2e' para Cypress 13+, pero no es necesaria si usamos backup externo
 
   //Aquí añadimos correctamente el bloque "env" Para utilizar la variable: Cypress.env('url')
   env: {
@@ -37,7 +35,6 @@ module.exports = defineConfig({
 
     setupNodeEvents(on, config) {
       require('cypress-mochawesome-reporter/plugin')(on);
-      // implement node event listeners here
 
       // Hook que se ejecuta después de cada run
       on('after:run', (results) => {
@@ -93,13 +90,13 @@ module.exports = defineConfig({
         try {
           console.log("=== Fusionando JSON de Mochawesome ===");
           execSync(
-            `cmd /c "npx mochawesome-merge cypress/report/.jsons/*.json > mochawesome.json"`,
+            `cmd /c "npx mochawesome-merge cypress/report/.jsons/*.json > cypress/report/mochawesome.json"`,
             { stdio: "inherit" }
           );
 
           console.log("=== Generando HTML de Mochawesome ===");
           execSync(
-            `npx marge mochawesome.json --reportDir cypress/report --inline --reportFilename index.html`,
+            `npx marge cypress/report/mochawesome.json --reportDir cypress/report --inline --reportFilename index.html`,
             { stdio: "inherit" }
           );
 
