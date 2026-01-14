@@ -25,7 +25,7 @@ module.exports = defineConfig({
   screenshotOnRunFailure: true,
   screenshotsFolder: "cypress/screenshots",
 
-  // === ENV (AQUÍ ACTIVAMOS ALLURE DE FORMA PERMANENTE) ===
+  // === ENV (ACTIVAR ALLURE) ===
   env: {
     url: "https://www.google.es/",
     allure: true
@@ -36,7 +36,7 @@ module.exports = defineConfig({
 
     setupNodeEvents(on, config) {
 
-      // === ACTIVAR ALLURE (DEBE IR PRIMERO) ===
+      // === ACTIVAR ALLURE ===
       console.log("🔥 Allure plugin cargado");
       allureWriter(on, config);
 
@@ -46,7 +46,6 @@ module.exports = defineConfig({
       // === BACKUPS SEGUROS (AFTER:SPEC) ===
       on('after:spec', (spec, results) => {
 
-        // === NOMBRE DEL SPEC (sin .cy.js) ===
         const specName = path.basename(spec.relative, '.cy.js');
 
         // === BACKUP VIDEOS ===
@@ -59,13 +58,11 @@ module.exports = defineConfig({
           fs.readdirSync(videosDir).forEach(file => {
             const srcPath = path.join(videosDir, file);
 
-            // Ignorar los .compressed.mp4
             if (file.endsWith('-compressed.mp4')) {
               try { fs.unlinkSync(srcPath); } catch {}
               return;
             }
 
-            // Copiar solo el vídeo del spec actual
             if (!file.startsWith(specName)) return;
 
             const destPath = path.join(backupVideosDir, file);
@@ -77,7 +74,7 @@ module.exports = defineConfig({
           });
         }
 
-        // === BACKUP SCREENSHOTS (RECURSIVO + SUBCARPETA) ===
+        // === BACKUP SCREENSHOTS ===
         const realScreenshots = path.join(__dirname, "cypress/screenshots");
         const backupScreenshotsDir = path.join(__dirname, 'screenshots_backup', specName);
 
@@ -91,7 +88,6 @@ module.exports = defineConfig({
             if (stat.isDirectory()) {
               copyScreenshotsRecursively(fullPath);
             } else if (file.endsWith(".png")) {
-
               const destBackup = path.join(backupScreenshotsDir, `${Date.now()}_${file}`);
               try {
                 fs.copyFileSync(fullPath, destBackup);
@@ -107,7 +103,8 @@ module.exports = defineConfig({
         }
       });
 
-      // === GENERAR REPORTE MOCHAWESOME + ALLURE (AFTER:RUN) ===
+      // === GENERAR SOLO MOCHAWESOME (AFTER:RUN) ===
+      // ❗ Allure YA NO genera el HTML aquí
       on('after:run', () => {
         try {
           execSync(
@@ -120,7 +117,7 @@ module.exports = defineConfig({
             { stdio: "inherit" }
           );
 
-          execSync(`allure generate allure-results --clean`, { stdio: "inherit" });
+          // ❌ ELIMINADO: execSync(`allure generate allure-results --clean`);
 
         } catch (error) {
           console.error("⚠️ Error generando reportes:", error);
