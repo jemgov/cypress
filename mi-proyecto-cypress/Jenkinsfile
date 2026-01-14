@@ -8,7 +8,7 @@ pipeline {
   parameters {
     string(
       name: 'TEST_SPEC',
-      defaultValue: 'e2e/1-getting-started/PRUEBAS/*.cy.js',
+      defaultValue: 'cypress/e2e/**/*.cy.js',
       description: 'Ruta del test o tests a ejecutar'
     )
   }
@@ -31,7 +31,7 @@ pipeline {
 
     stage('Ejecutar pruebas Cypress') {
       steps {
-        timeout(time: 10, unit: 'MINUTES') {
+        timeout(time: 15, unit: 'MINUTES') {
           dir('mi-proyecto-cypress') {
             powershell '''
               Write-Host "=== Ejecutando pruebas Cypress ==="
@@ -49,54 +49,17 @@ pipeline {
           powershell '''
             Write-Host "=== Diagnóstico de artefactos ==="
 
-            Write-Host "--- Videos ---"
-            Get-ChildItem -Recurse cypress/report/videos -ErrorAction SilentlyContinue
-
-            Write-Host "--- Screenshots ---"
-            Get-ChildItem -Recurse cypress/report/screenshots -ErrorAction SilentlyContinue
-
-            Write-Host "--- Backups de videos ---"
+            Write-Host "--- Videos Backup ---"
             Get-ChildItem -Recurse videos_backup -ErrorAction SilentlyContinue
 
-            Write-Host "--- Backups de screenshots ---"
+            Write-Host "--- Screenshots Backup ---"
             Get-ChildItem -Recurse screenshots_backup -ErrorAction SilentlyContinue
-          '''
-        }
-      }
-    }
 
-    stage('Generar reporte Mochawesome') {
-      steps {
-        dir('mi-proyecto-cypress') {
-          powershell '''
-            Write-Host "=== Generando reporte HTML ==="
+            Write-Host "--- Mochawesome Report ---"
+            Get-ChildItem -Recurse cypress/report -ErrorAction SilentlyContinue
 
-            try {
-              # Verificar si existen JSON en la carpeta correcta
-              $jsonFiles = Get-ChildItem -Path cypress/report/.jsons -Filter *.json -ErrorAction SilentlyContinue
-              if ($jsonFiles.Count -eq 0) {
-                Write-Host "⚠️ No hay JSON para fusionar. Se omite el reporte."
-                exit 0
-              }
-
-              Write-Host "=== Fusionando JSON con mochawesome-merge ==="
-              cmd /c "npx mochawesome-merge cypress/report/.jsons/*.json > mochawesome.json"
-
-              if (-not (Test-Path mochawesome.json)) {
-                Write-Host "⚠️ No se generó mochawesome.json. Se omite el reporte."
-                exit 0
-              }
-
-              Write-Host "=== Generando HTML con marge ==="
-              npx marge mochawesome.json --reportDir cypress/report --inline
-
-              Write-Host "✅ Reporte generado en cypress/report/index.html"
-
-            } catch {
-              Write-Host "⚠️ Error generando el reporte, pero no se detiene el pipeline."
-            }
-
-            exit 0
+            Write-Host "--- Allure Results ---"
+            Get-ChildItem -Recurse allure-results -ErrorAction SilentlyContinue
           '''
         }
       }
@@ -110,15 +73,9 @@ pipeline {
       archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/**', allowEmptyArchive: true
       archiveArtifacts artifacts: 'mi-proyecto-cypress/videos_backup/**', allowEmptyArchive: true
       archiveArtifacts artifacts: 'mi-proyecto-cypress/screenshots_backup/**', allowEmptyArchive: true
+      archiveArtifacts artifacts: 'mi-proyecto-cypress/allure-results/**', allowEmptyArchive: true
 
-      publishHTML([
-        reportDir: 'mi-proyecto-cypress/cypress/report',
-        reportFiles: 'index.html',
-        reportName: 'Reporte Cypress',
-        keepAll: true,
-        alwaysLinkToLastBuild: true,
-        allowMissing: false
-      ])
+      allure includeProperties: false, jdk: '', results: [[path: 'mi-proyecto-cypress/allure-results']]
     }
   }
 }
