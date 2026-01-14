@@ -2,6 +2,7 @@ const { defineConfig } = require("cypress");
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require("child_process");
+const allureWriter = require("@shelex/cypress-allure-plugin/writer");
 
 module.exports = defineConfig({
 
@@ -20,12 +21,14 @@ module.exports = defineConfig({
 
   // === CONFIGURACIÓN DE VIDEOS Y SCREENSHOTS ===
   video: true,
-  videosFolder: "cypress/report/videos",
+  videosFolder: "cypress/videos",
   screenshotOnRunFailure: true,
-  screenshotsFolder: "cypress/report/screenshots",
+  screenshotsFolder: "cypress/screenshots",
 
+  // === ENV (AQUÍ ACTIVAMOS ALLURE DE FORMA PERMANENTE) ===
   env: {
     url: "https://www.google.es/",
+    allure: true
   },
 
   e2e: {
@@ -33,56 +36,79 @@ module.exports = defineConfig({
 
     setupNodeEvents(on, config) {
 
+      // === ACTIVAR ALLURE (DEBE IR PRIMERO) ===
+      console.log("🔥 Allure plugin cargado");
+      allureWriter(on, config);
+
       // === ACTIVAR MOCHAWESOME ===
       require('cypress-mochawesome-reporter/plugin')(on);
 
-      // === ACTIVAR ALLURE ===
-      require('@shelex/cypress-allure-plugin/writer')(on, config);
+      // === BACKUPS SEGUROS (AFTER:SPEC) ===
+      on('after:spec', (spec, results) => {
 
-      // === POST-EJECUCIÓN (BACKUPS + MOCHAWESOME) ===
-      on('after:run', () => {
+        // === NOMBRE DEL SPEC (sin .cy.js) ===
+        const specName = path.basename(spec.relative, '.cy.js');
 
-        // ---- BACKUP VIDEOS ----
-        const videosDir = path.join(__dirname, 'cypress/report/videos');
-        const backupVideosDir = path.join(__dirname, 'videos_backup');
+        // === BACKUP VIDEOS ===
+        const videosDir = path.join(__dirname, 'cypress/videos');
+        const backupVideosDir = path.join(__dirname, 'videos_backup', specName);
 
-        if (!fs.existsSync(backupVideosDir)) {
-          fs.mkdirSync(backupVideosDir, { recursive: true });
-        }
+        fs.mkdirSync(backupVideosDir, { recursive: true });
 
         if (fs.existsSync(videosDir)) {
           fs.readdirSync(videosDir).forEach(file => {
             const srcPath = path.join(videosDir, file);
-            const destPath = path.join(backupVideosDir, `${Date.now()}_${file}`);
-            fs.copyFileSync(srcPath, destPath);
+
+            // Ignorar los .compressed.mp4
+            if (file.endsWith('-compressed.mp4')) {
+              try { fs.unlinkSync(srcPath); } catch {}
+              return;
+            }
+
+            // Copiar solo el vídeo del spec actual
+            if (!file.startsWith(specName)) return;
+
+            const destPath = path.join(backupVideosDir, file);
+            try {
+              fs.copyFileSync(srcPath, destPath);
+            } catch (err) {
+              console.error("⚠️ Error copiando video:", err.message);
+            }
           });
         }
 
-        // ---- BACKUP + COPIA SCREENSHOTS ----
+        // === BACKUP SCREENSHOTS (RECURSIVO + SUBCARPETA) ===
         const realScreenshots = path.join(__dirname, "cypress/screenshots");
-        const reportScreenshots = path.join(__dirname, "cypress/report/screenshots");
-        const backupScreenshotsDir = path.join(__dirname, 'screenshots_backup');
+        const backupScreenshotsDir = path.join(__dirname, 'screenshots_backup', specName);
 
-        if (!fs.existsSync(reportScreenshots)) {
-          fs.mkdirSync(reportScreenshots, { recursive: true });
-        }
-        if (!fs.existsSync(backupScreenshotsDir)) {
-          fs.mkdirSync(backupScreenshotsDir, { recursive: true });
-        }
+        fs.mkdirSync(backupScreenshotsDir, { recursive: true });
+
+        const copyScreenshotsRecursively = (dir) => {
+          fs.readdirSync(dir).forEach(file => {
+            const fullPath = path.join(dir, file);
+            const stat = fs.statSync(fullPath);
+
+            if (stat.isDirectory()) {
+              copyScreenshotsRecursively(fullPath);
+            } else if (file.endsWith(".png")) {
+
+              const destBackup = path.join(backupScreenshotsDir, `${Date.now()}_${file}`);
+              try {
+                fs.copyFileSync(fullPath, destBackup);
+              } catch (err) {
+                console.error("⚠️ Error copiando screenshot:", err.message);
+              }
+            }
+          });
+        };
 
         if (fs.existsSync(realScreenshots)) {
-          fs.readdirSync(realScreenshots).forEach(file => {
-            const srcPath = path.join(realScreenshots, file);
-
-            const destReport = path.join(reportScreenshots, `${Date.now()}_${file}`);
-            fs.copyFileSync(srcPath, destReport);
-
-            const destBackup = path.join(backupScreenshotsDir, `${Date.now()}_${file}`);
-            fs.copyFileSync(srcPath, destBackup);
-          });
+          copyScreenshotsRecursively(realScreenshots);
         }
+      });
 
-        // === GENERAR REPORTE MOCHAWESOME ===
+      // === GENERAR REPORTE MOCHAWESOME + ALLURE (AFTER:RUN) ===
+      on('after:run', () => {
         try {
           execSync(
             `cmd /c "npx mochawesome-merge cypress/report/.jsons/*.json > cypress/report/mochawesome.json"`,
@@ -94,8 +120,10 @@ module.exports = defineConfig({
             { stdio: "inherit" }
           );
 
+          execSync(`allure generate allure-results --clean`, { stdio: "inherit" });
+
         } catch (error) {
-          console.error("⚠️ Error generando Mochawesome:", error);
+          console.error("⚠️ Error generando reportes:", error);
         }
 
         // === ELIMINAR HTMLS NO DESEADOS ===
