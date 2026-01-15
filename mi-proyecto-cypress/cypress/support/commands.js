@@ -35,3 +35,10 @@ Cypress.Commands.add("login", (username, password) => {
   cy.get('#password').type(password)
   cy.get('button[type="submit"]').click()
 })
+
+
+Cypress.Commands.add('setAllureLabels', (owner, severity, feature) => {
+  cy.allure().owner(owner);
+  cy.allure().severity(severity);
+  cy.allure().feature(feature);
+});
