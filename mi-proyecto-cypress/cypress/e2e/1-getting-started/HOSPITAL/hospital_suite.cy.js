@@ -394,5 +394,4 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
     const r = Math.random();
     expect(r).to.be.greaterThan(0.5);
   });
-
 });
