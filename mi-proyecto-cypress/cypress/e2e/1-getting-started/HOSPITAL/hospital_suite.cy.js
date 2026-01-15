@@ -1,5 +1,4 @@
 /// <reference types="cypress" />
-require('@shelex/allure-cypress');
 
 describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
 
@@ -123,7 +122,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
     expect(medicamentos.filter(m => m.proveedor === 'MediHealth').length).to.be.greaterThan(0);
   });
 
-  it('P14 - Medicamentos de Hospicare', () => {
+  it('P14 - Medicamentos de Hospicecare', () => {
     cy.allure().owner('Jesús G.');
     cy.allure().severity('minor');
     cy.allure().feature('medicación');
@@ -142,12 +141,12 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
     });
   });
 
-  it('P16 - Medicamentos con letra A en el nombre', () => {
+  it('P16 - Pacientes con letra A en el nombre', () => {
     cy.allure().owner('Jesús G.');
     cy.allure().severity('minor');
-    cy.allure().feature('medicación');
+    cy.allure().feature('urgencias');
 
-    expect(medicamentos.filter(m => /a/i.test(m.nombre)).length).to.be.greaterThan(0);
+    expect(pacientes.filter(p => /a/i.test(p.nombre)).length).to.be.greaterThan(0);
   });
 
   it('P17 - Pacientes en más de 5 áreas', () => {
@@ -396,36 +395,4 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
     expect(r).to.be.greaterThan(0.5);
   });
 
-});
-
-//FLAKY TEST
-
-it('FL01 - Validación aleatoria de paciente crítico', () => {
-
-  cy.allure().owner('Jesús G.');
-  cy.allure().severity('minor');
-  cy.allure().feature('UCI');
-
-  const r = Math.random();
-  expect(r).to.be.greaterThan(0.3);
-});
-
-it('FL02 - Validación aleatoria de proveedor activo', () => {
-
-  cy.allure().owner('QA Team');
-  cy.allure().severity('normal');
-  cy.allure().feature('medicación');
-
-  const r = Math.random();
-  expect(r).to.be.lessThan(0.8);
-});
-
-it('FL03 - Validación aleatoria de nombre de paciente', () => {
-
-  cy.allure().owner('Jesús G.');
-  cy.allure().severity('minor');
-  cy.allure().feature('urgencias');
-
-  const r = Math.random();
-  expect(r).to.be.greaterThan(0.5);
 });
