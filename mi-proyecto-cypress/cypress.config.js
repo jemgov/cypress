@@ -31,10 +31,12 @@ module.exports = defineConfig({
     allure: true
   },
 
-  // === ACTIVAR RETRIES PARA ALLURE ===
+  // ======================================================
+  //  RETRIES ACTIVADOS PARA DETECTAR TESTS FLAKY EN ALLURE
+  // ======================================================
   retries: {
-    runMode: 2,
-    openMode: 0
+    runMode: 2,   // Jenkins / CLI → reintenta 2 veces
+    openMode: 1   // Modo interactivo → 1 retry para ver flaky en local
   },
 
   e2e: {
