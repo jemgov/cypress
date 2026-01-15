@@ -1,6 +1,6 @@
 /// <reference types="cypress" />
 
-describe('Gestión de pacientes - Urgencias y UCI', () => {
+describe('Gestión de pacientes - Urgencias y UCI - Pruebas de reconocimiento y estabilidad HUDR_2.3 - S3/Y26', () => {
   let pacientes;
   let medicamentos;
 
