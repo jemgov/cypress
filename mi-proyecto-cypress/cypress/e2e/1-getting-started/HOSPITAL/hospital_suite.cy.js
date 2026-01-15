@@ -5,7 +5,7 @@
 //  28 PASSED — 7 FAILED — 4 SKIPPED — 1 BROKEN
 // ======================================================
 
-describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
+describe('HUDR_2.3 - Pruebas y validaciones hospitalarias S3/26', () => {
 
   let pacientes;
   let medicamentos;
