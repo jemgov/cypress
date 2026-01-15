@@ -31,6 +31,12 @@ module.exports = defineConfig({
     allure: true
   },
 
+  // === ACTIVAR RETRIES PARA ALLURE ===
+  retries: {
+    runMode: 2,
+    openMode: 0
+  },
+
   e2e: {
     trashAssetsBeforeRuns: false,
 
@@ -104,7 +110,6 @@ module.exports = defineConfig({
       });
 
       // === GENERAR SOLO MOCHAWESOME (AFTER:RUN) ===
-      // ❗ Allure YA NO genera el HTML aquí
       on('after:run', () => {
         try {
           execSync(
@@ -116,8 +121,6 @@ module.exports = defineConfig({
             `npx marge cypress/report/mochawesome.json --reportDir cypress/report --inline --reportFilename index.html`,
             { stdio: "inherit" }
           );
-
-          // ❌ ELIMINADO: execSync(`allure generate allure-results --clean`);
 
         } catch (error) {
           console.error("⚠️ Error generando reportes:", error);
