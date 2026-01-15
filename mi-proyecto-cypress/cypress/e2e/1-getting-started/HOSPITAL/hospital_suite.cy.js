@@ -1,5 +1,7 @@
 /// <reference types="cypress" />
 
+require('@shelex/allure-cypress');
+
 // ======================================================
 //  SUITE COMPLETA — 40 TESTS ALEATORIOS
 //  28 PASSED — 7 FAILED — 4 SKIPPED — 1 BROKEN
@@ -368,5 +370,34 @@ describe('HUDR_2.3 - Pruebas y validaciones hospitalarias S3/26', () => {
   }, () => {
     throw new Error('Error inesperado en módulo de gestión de camas');
   });
+
+//FLAKY TEST
+
+it('FL01 - Validación aleatoria de paciente crítico', {
+  severity: 'minor',
+  feature: 'UCI',
+  owner: 'Jesús G.'
+}, () => {
+  const r = Math.random();
+  expect(r).to.be.greaterThan(0.3); // 30% de fallar
+});
+
+it('FL02 - Validación aleatoria de proveedor activo', {
+  severity: 'normal',
+  feature: 'medicación',
+  owner: 'QA Team'
+}, () => {
+  const r = Math.random();
+  expect(r).to.be.lessThan(0.8); // 20% de fallar
+});
+
+it('FL03 - Validación aleatoria de nombre de paciente', {
+  severity: 'minor',
+  feature: 'urgencias',
+  owner: 'Jesús G.'
+}, () => {
+  const r = Math.random();
+  expect(r).to.be.greaterThan(0.5); // 50% de fallar
+});
 
 });
