@@ -72,43 +72,6 @@ pipeline {
       }
     }
 
-    stage('Personalizar estilos Allure') {
-      steps {
-        dir('mi-proyecto-cypress') {
-          powershell '''
-            Write-Host "=== Personalizando colores de status y severidad ==="
-
-            $cssPath = "allure-report\\styles.css"
-
-            if (Test-Path $cssPath) {
-
-              Write-Host "Aplicando estilos personalizados..."
-
-              Add-Content -Path $cssPath -Value @"
-/* Colores de status en gráficas circulares y de barras */
-path[stroke='#4caf50'] { stroke: #2ecc71 !important; } /* passed */
-path[stroke='#f44336'] { stroke: #e74c3c !important; } /* failed */
-path[stroke='#ff9800'] { stroke: #e67e22 !important; } /* broken */
-path[stroke='#9c27b0'] { stroke: #9b59b6 !important; } /* unknown */
-path[stroke='#607d8b'] { stroke: #95a5a6 !important; } /* skipped */
-
-/* Colores de badges de severidad */
-.severity-blocker  { background-color: #e74c3c !important; }
-.severity-critical { background-color: #e67e22 !important; }
-.severity-normal   { background-color: #f1c40f !important; }
-.severity-minor    { background-color: #3498db !important; }
-.severity-trivial  { background-color: #95a5a6 !important; }
-"@
-
-              Write-Host "=== Estilos personalizados aplicados ==="
-            } else {
-              Write-Host "⚠️ No se encontró styles.css"
-            }
-          '''
-        }
-      }
-    }
-
     stage('Diagnóstico de artefactos') {
       steps {
         dir('mi-proyecto-cypress') {
