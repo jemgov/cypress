@@ -85,12 +85,12 @@ pipeline {
               Write-Host "Aplicando estilos personalizados..."
 
               Add-Content -Path $cssPath -Value @"
-/* Colores de status en gráficas */
-.chart_fill_status_passed  { fill: #2ecc71 !important; }
-.chart_fill_status_failed  { fill: #e74c3c !important; }
-.chart_fill_status_broken  { fill: #9b59b6 !important; }
-.chart_fill_status_skipped { fill: #95a5a6 !important; }
-.chart_fill_status_unknown { fill: #34495e !important; }
+/* Colores de status en gráficas circulares y de barras */
+path[stroke='#4caf50'] { stroke: #2ecc71 !important; } /* passed */
+path[stroke='#f44336'] { stroke: #e74c3c !important; } /* failed */
+path[stroke='#ff9800'] { stroke: #e67e22 !important; } /* broken */
+path[stroke='#9c27b0'] { stroke: #9b59b6 !important; } /* unknown */
+path[stroke='#607d8b'] { stroke: #95a5a6 !important; } /* skipped */
 
 /* Colores de badges de severidad */
 .severity-blocker  { background-color: #e74c3c !important; }
