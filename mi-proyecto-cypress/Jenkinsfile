@@ -76,23 +76,31 @@ pipeline {
       steps {
         dir('mi-proyecto-cypress') {
           powershell '''
-            Write-Host "=== Personalizando colores de Allure por posición ==="
+            Write-Host "=== Personalizando colores de status y severidad ==="
 
             $cssPath = "allure-report\\styles.css"
 
             if (Test-Path $cssPath) {
 
-              Write-Host "Aplicando colores por severidad (posición de barra)..."
+              Write-Host "Aplicando estilos personalizados..."
 
               Add-Content -Path $cssPath -Value @"
-svg g:nth-of-type(1) rect.chart_fill_status_passed { fill: #e74c3c !important; } /* blocker */
-svg g:nth-of-type(2) rect.chart_fill_status_passed { fill: #e67e22 !important; } /* critical */
-svg g:nth-of-type(3) rect.chart_fill_status_passed { fill: #f1c40f !important; } /* normal */
-svg g:nth-of-type(4) rect.chart_fill_status_passed { fill: #3498db !important; } /* minor */
-svg g:nth-of-type(5) rect.chart_fill_status_passed { fill: #95a5a6 !important; } /* trivial */
+/* Colores de status en gráficas */
+.chart_fill_status_passed  { fill: #2ecc71 !important; }
+.chart_fill_status_failed  { fill: #e74c3c !important; }
+.chart_fill_status_broken  { fill: #9b59b6 !important; }
+.chart_fill_status_skipped { fill: #95a5a6 !important; }
+.chart_fill_status_unknown { fill: #34495e !important; }
+
+/* Colores de badges de severidad */
+.severity-blocker  { background-color: #e74c3c !important; }
+.severity-critical { background-color: #e67e22 !important; }
+.severity-normal   { background-color: #f1c40f !important; }
+.severity-minor    { background-color: #3498db !important; }
+.severity-trivial  { background-color: #95a5a6 !important; }
 "@
 
-              Write-Host "=== Colores personalizados aplicados ==="
+              Write-Host "=== Estilos personalizados aplicados ==="
             } else {
               Write-Host "⚠️ No se encontró styles.css"
             }
