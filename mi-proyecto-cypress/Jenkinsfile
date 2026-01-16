@@ -76,20 +76,20 @@ pipeline {
       steps {
         dir('mi-proyecto-cypress') {
           powershell '''
-            Write-Host "=== Personalizando colores de Allure ==="
+            Write-Host "=== Personalizando colores de Allure por posición ==="
 
             $cssPath = "allure-report\\styles.css"
 
             if (Test-Path $cssPath) {
 
-              Write-Host "Sobrescribiendo colores de severidad..."
+              Write-Host "Aplicando colores por severidad (posición de barra)..."
 
               Add-Content -Path $cssPath -Value @"
-.chart__fill_status_blocker { fill: #e74c3c !important; }
-.chart__fill_status_critical { fill: #e67e22 !important; }
-.chart__fill_status_normal { fill: #f1c40f !important; }
-.chart__fill_status_minor { fill: #3498db !important; }
-.chart__fill_status_trivial { fill: #95a5a6 !important; }
+svg g:nth-of-type(1) rect.chart_fill_status_passed { fill: #e74c3c !important; } /* blocker */
+svg g:nth-of-type(2) rect.chart_fill_status_passed { fill: #e67e22 !important; } /* critical */
+svg g:nth-of-type(3) rect.chart_fill_status_passed { fill: #f1c40f !important; } /* normal */
+svg g:nth-of-type(4) rect.chart_fill_status_passed { fill: #3498db !important; } /* minor */
+svg g:nth-of-type(5) rect.chart_fill_status_passed { fill: #95a5a6 !important; } /* trivial */
 "@
 
               Write-Host "=== Colores personalizados aplicados ==="
