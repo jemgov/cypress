@@ -72,6 +72,35 @@ pipeline {
       }
     }
 
+    stage('Personalizar estilos Allure') {
+      steps {
+        dir('mi-proyecto-cypress') {
+          powershell '''
+            Write-Host "=== Personalizando colores de Allure ==="
+
+            $cssPath = "allure-report\\styles.css"
+
+            if (Test-Path $cssPath) {
+
+              Write-Host "Modificando colores de severidad..."
+
+              Add-Content -Path $cssPath -Value @"
+.severity-blocker { fill: #e74c3c !important; }
+.severity-critical { fill: #e67e22 !important; }
+.severity-normal { fill: #f1c40f !important; }
+.severity-minor { fill: #3498db !important; }
+.severity-trivial { fill: #95a5a6 !important; }
+"@
+
+              Write-Host "=== Colores personalizados aplicados ==="
+            } else {
+              Write-Host "⚠️ No se encontró styles.css"
+            }
+          '''
+        }
+      }
+    }
+
     stage('Diagnóstico de artefactos') {
       steps {
         dir('mi-proyecto-cypress') {
