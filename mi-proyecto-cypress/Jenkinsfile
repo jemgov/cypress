@@ -40,7 +40,7 @@ pipeline {
               $code = $LASTEXITCODE
               Write-Host "Cypress terminó con código: $code"
 
-              # No abortar el pipeline: permitir que Jenkins registre los resultados
+              # No abortar el pipeline
               exit 0
             '''
           }
@@ -66,9 +66,6 @@ pipeline {
     }
 
     stage('Diagnóstico de artefactos') {
-      when {
-        always()
-      }
       steps {
         dir('mi-proyecto-cypress') {
           powershell '''
@@ -98,7 +95,6 @@ pipeline {
     always {
       echo '=== Archivando artefactos ==='
 
-      // 🟦 Mover artefactos al workspace raíz para que Jenkins los muestre como enlaces
       powershell '''
         Write-Host "=== Moviendo artefactos al workspace raíz ==="
 
@@ -120,7 +116,6 @@ pipeline {
         Get-ChildItem -Recurse "mi-proyecto-cypress/cypress/results/*.xml" -ErrorAction SilentlyContinue
       '''
 
-      // 🟦 Marcar como UNSTABLE para que la tabla registre los tests
       script {
         currentBuild.result = 'UNSTABLE'
       }
@@ -129,7 +124,6 @@ pipeline {
 
       allure includeProperties: false, jdk: '', results: [[path: 'mi-proyecto-cypress/allure-results']]
 
-      // 🟥 Marcar como FAILURE después de registrar los resultados
       script {
         currentBuild.result = 'FAILURE'
       }
