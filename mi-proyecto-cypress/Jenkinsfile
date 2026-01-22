@@ -95,6 +95,10 @@ pipeline {
     always {
       echo '=== Archivando artefactos ==='
 
+      // 🟩 Archivado explícito del index.html de Mochawesome
+      archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/index.html', allowEmptyArchive: false
+
+      // 🟦 Archivado del resto de artefactos (videos, screenshots, Allure, JSONs)
       archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/**', allowEmptyArchive: true
       archiveArtifacts artifacts: 'mi-proyecto-cypress/videos_backup/**', allowEmptyArchive: true
       archiveArtifacts artifacts: 'mi-proyecto-cypress/screenshots_backup/**', allowEmptyArchive: true
@@ -106,7 +110,7 @@ pipeline {
         Get-ChildItem -Recurse "mi-proyecto-cypress/cypress/results/*.xml" -ErrorAction SilentlyContinue
       '''
 
-      // 🟦 Dejamos que JUnit decida el estado del build
+      // 🟦 JUnit decide el estado del build (SUCCESS o UNSTABLE)
       junit testResults: 'mi-proyecto-cypress/cypress/results/*.xml', allowEmptyResults: true, keepLongStdio: true
 
       allure includeProperties: false, jdk: '', results: [[path: 'mi-proyecto-cypress/allure-results']]
