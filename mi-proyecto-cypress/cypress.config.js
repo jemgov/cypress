@@ -24,6 +24,14 @@ module.exports = defineConfig({
   screenshotOnRunFailure: true,
   screenshotsFolder: "cypress/screenshots",
 
+  // ============================================================
+  // ENV (incluye timezone para Allure)
+  // ============================================================
+  env: {
+    allure: true,
+    allureTimezone: "local"   // ← CORRECCIÓN: fuerza a Allure a usar hora local
+  },
+
   retries: {
     runMode: 2,
     openMode: 1
@@ -35,14 +43,16 @@ module.exports = defineConfig({
     setupNodeEvents(on, config) {
 
       // ============================================================
-      // ACTIVAR ALLURE
+      // ACTIVAR ALLURE con timezone local
       // ============================================================
-      allureWriter(on, config);
+      allureWriter(on, { ...config, timezone: "local" });
+      console.log("🔥 Allure plugin cargado con timezone local");
 
       // ============================================================
       // ACTIVAR MOCHAWESOME
       // ============================================================
       require("cypress-mochawesome-reporter/plugin")(on);
+      console.log("📊 Mochawesome plugin cargado");
 
       // ============================================================
       // GENERAR JUNIT PARA JENKINS
@@ -59,6 +69,7 @@ module.exports = defineConfig({
         const safeName = specName.replace(/[^a-zA-Z0-9]/g, "_");
         const junitFile = path.join(junitDir, `results-${safeName}.xml`);
 
+        // Si el spec falla antes de ejecutar tests
         if (!results || !results.tests || results.tests.length === 0) {
           const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
@@ -113,6 +124,7 @@ module.exports = defineConfig({
           fs.mkdirSync(jsonsDir, { recursive: true });
         }
 
+        // Mover JSONs generados por mochawesome
         const jsonFiles = fs
           .readdirSync(reportDir)
           .filter(f => f.endsWith(".json") && f !== "mochawesome.json");
@@ -124,6 +136,7 @@ module.exports = defineConfig({
           );
         });
 
+        // MERGE + HTML
         try {
           execSync(
             `npx mochawesome-merge ${jsonsDir}/*.json > ${reportDir}/mochawesome.json`,
