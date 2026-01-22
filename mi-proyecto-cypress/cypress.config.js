@@ -73,12 +73,16 @@ module.exports = defineConfig({
 
         // ⚠️ Si el spec falla ANTES de ejecutar tests → generar XML mínimo
         if (!results || !results.tests || results.tests.length === 0) {
-          const xml = `
-<testsuite name="${specName}" tests="1" failures="1">
-  <testcase name="${specName}">
-    <failure message="Spec failed before running tests">Spec failed before running tests</failure>
-  </testcase>
-</testsuite>`;
+          const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="${specName}" tests="1" failures="1" errors="0" skipped="0">
+    <testcase classname="${safeName}" name="${specName}">
+      <failure message="Spec failed before running tests" type="SpecError">
+        Spec failed before running tests
+      </failure>
+    </testcase>
+  </testsuite>
+</testsuites>`;
           fs.writeFileSync(junitFile, xml);
           return;
         }
@@ -87,19 +91,27 @@ module.exports = defineConfig({
         const failures = results.tests.filter(t => t.state === "failed").length;
 
         // XML estándar con soporte completo para Jenkins
-        const xml = `
-<testsuite name="${specName}" tests="${results.tests.length}" failures="${failures}">
-  ${results.tests
-    .map(t => {
-      const name = t.title.join(" ");
-      if (t.state === "failed") {
-        return `<testcase name="${name}"><failure message="Test failed">Test failed</failure></testcase>`;
-      } else {
-        return `<testcase name="${name}"/>`;
-      }
-    })
-    .join("\n")}
-</testsuite>`;
+        const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="${specName}" tests="${results.tests.length}" failures="${failures}" errors="0" skipped="0">
+    ${results.tests
+      .map(t => {
+        const name = t.title.join(" ");
+        const classname = safeName;
+
+        if (t.state === "failed") {
+          return `<testcase classname="${classname}" name="${name}">
+      <failure message="Test failed" type="AssertionError">
+        ${t.displayError || "Test failed"}
+      </failure>
+    </testcase>`;
+        } else {
+          return `<testcase classname="${classname}" name="${name}" />`;
+        }
+      })
+      .join("\n")}
+  </testsuite>
+</testsuites>`;
 
         fs.writeFileSync(junitFile, xml);
       });
