@@ -54,10 +54,7 @@ pipeline {
             Write-Host "=== Copiando historial de Allure (si existe) ==="
 
             if (Test-Path "allure-report/history") {
-              Write-Host "Historial encontrado. Copiando..."
               Copy-Item -Recurse -Force "allure-report/history" "allure-results/history"
-            } else {
-              Write-Host "No existe historial previo."
             }
           '''
         }
@@ -69,23 +66,25 @@ pipeline {
         dir('mi-proyecto-cypress') {
           powershell '''
             Write-Host "=== Diagnóstico de artefactos ==="
-
-            Write-Host "--- Videos Backup ---"
-            Get-ChildItem -Recurse videos_backup -ErrorAction SilentlyContinue
-
-            Write-Host "--- Screenshots Backup ---"
-            Get-ChildItem -Recurse screenshots_backup -ErrorAction SilentlyContinue
-
-            Write-Host "--- Mochawesome Report ---"
             Get-ChildItem -Recurse cypress/report -ErrorAction SilentlyContinue
-
-            Write-Host "--- Allure Results ---"
+            Get-ChildItem -Recurse videos_backup -ErrorAction SilentlyContinue
+            Get-ChildItem -Recurse screenshots_backup -ErrorAction SilentlyContinue
             Get-ChildItem -Recurse allure-results -ErrorAction SilentlyContinue
-
-            Write-Host "--- Allure Report (HTML) ---"
-            Get-ChildItem -Recurse allure-report -ErrorAction SilentlyContinue
           '''
         }
+      }
+    }
+
+    stage('Publicar Mochawesome') {
+      steps {
+        publishHTML(target: [
+          reportDir: 'mi-proyecto-cypress/cypress/report',
+          reportFiles: 'index.html',
+          reportName: 'Reporte Mochawesome',
+          keepAll: true,
+          alwaysLinkToLastBuild: true,
+          allowMissing: true
+        ])
       }
     }
   }
@@ -94,45 +93,15 @@ pipeline {
     always {
       echo '=== Archivando artefactos ==='
 
-      // Copiar index.html a la raíz del workspace
-      powershell '''
-        Write-Host "=== Copiando index.html a la raíz del workspace ==="
-
-        $source = "mi-proyecto-cypress/cypress/report/index.html"
-        $target = "index.html"
-
-        if (Test-Path $source) {
-          Copy-Item -Force $source $target
-          Write-Host "✔ index.html copiado correctamente"
-        } else {
-          Write-Host "⚠ No se encontró index.html en la ruta esperada"
-        }
-      '''
-
-      // Archivar el index.html principal
-      archiveArtifacts artifacts: 'index.html', allowEmptyArchive: false
-
-      // Archivar el resto de artefactos
       archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/**', allowEmptyArchive: true
       archiveArtifacts artifacts: 'mi-proyecto-cypress/videos_backup/**', allowEmptyArchive: true
       archiveArtifacts artifacts: 'mi-proyecto-cypress/screenshots_backup/**', allowEmptyArchive: true
       archiveArtifacts artifacts: 'mi-proyecto-cypress/allure-results/**', allowEmptyArchive: true
       archiveArtifacts artifacts: 'mi-proyecto-cypress/allure-report/**', allowEmptyArchive: true
 
-      powershell '''
-        Write-Host "=== XMLs detectados antes de JUnit ==="
-        Get-ChildItem -Recurse "mi-proyecto-cypress/cypress/results/*.xml" -ErrorAction SilentlyContinue
-      '''
-
-      // JUnit decide el estado del build
       junit testResults: 'mi-proyecto-cypress/cypress/results/*.xml', allowEmptyResults: true, keepLongStdio: true
 
       allure includeProperties: false, jdk: '', results: [[path: 'mi-proyecto-cypress/allure-results']]
-
-      // Añadir enlace directo al reporte Mochawesome en la descripción del build
-      script {
-        currentBuild.description = "<a href=\"artifact/index.html\">Ver reporte Mochawesome</a>"
-      }
     }
   }
 }
