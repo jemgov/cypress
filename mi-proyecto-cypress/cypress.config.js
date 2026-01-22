@@ -57,18 +57,35 @@ module.exports = defineConfig({
       require("cypress-mochawesome-reporter/plugin")(on);
 
       // ============================================================
-      // GENERAR JUNIT PARA JENKINS
+      // GENERAR JUNIT PARA JENKINS (ROBUSTO)
       // ============================================================
       on("after:spec", (spec, results) => {
-        if (!results || !results.tests) return;
 
         const junitDir = path.join(__dirname, "cypress/results");
         if (!fs.existsSync(junitDir)) fs.mkdirSync(junitDir, { recursive: true });
 
-        const junitFile = path.join(junitDir, `results-${Date.now()}.xml`);
+        const specName = path.basename(
+          spec.relative || spec.specFile || spec.name || `spec-${Date.now()}`
+        );
 
+        const safeName = specName.replace(/[^a-zA-Z0-9]/g, "_");
+        const junitFile = path.join(junitDir, `results-${safeName}.xml`);
+
+        // ⚠️ Si el spec falla ANTES de ejecutar tests → generar XML mínimo
+        if (!results || !results.tests || results.tests.length === 0) {
+          const xml = `
+<testsuite name="${specName}" tests="1" failures="1">
+  <testcase name="${specName}">
+    <failure message="Spec failed before running tests">Spec failed before running tests</failure>
+  </testcase>
+</testsuite>`;
+          fs.writeFileSync(junitFile, xml);
+          return;
+        }
+
+        // XML estándar cuando sí hay tests ejecutados
         const xml = `
-<testsuite name="${spec.name}" tests="${results.tests.length}">
+<testsuite name="${specName}" tests="${results.tests.length}">
   ${results.tests
     .map(t => `<testcase name="${t.title.join(" ")}" status="${t.state}" />`)
     .join("\n")}
