@@ -96,6 +96,10 @@ pipeline {
       archiveArtifacts artifacts: 'mi-proyecto-cypress/allure-results/**', allowEmptyArchive: true
       archiveArtifacts artifacts: 'mi-proyecto-cypress/allure-report/**', allowEmptyArchive: true
 
+      // === PUBLICAR JUNIT PARA ESTADÍSTICAS ===
+      junit 'mi-proyecto-cypress/cypress/results/*.xml'
+
+      // === PUBLICAR ALLURE ===
       allure includeProperties: false, jdk: '', results: [[path: 'mi-proyecto-cypress/allure-results']]
     }
   }
