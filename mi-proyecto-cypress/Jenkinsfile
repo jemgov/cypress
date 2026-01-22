@@ -95,27 +95,18 @@ pipeline {
     always {
       echo '=== Archivando artefactos ==='
 
-      powershell '''
-        Write-Host "=== Moviendo artefactos al workspace raíz ==="
-
-        Copy-Item -Recurse -Force "mi-proyecto-cypress/cypress/report" "report"
-        Copy-Item -Recurse -Force "mi-proyecto-cypress/videos_backup" "videos_backup"
-        Copy-Item -Recurse -Force "mi-proyecto-cypress/screenshots_backup" "screenshots_backup"
-        Copy-Item -Recurse -Force "mi-proyecto-cypress/allure-results" "allure-results"
-        Copy-Item -Recurse -Force "mi-proyecto-cypress/allure-report" "allure-report"
-      '''
-
-      archiveArtifacts artifacts: 'report/**', allowEmptyArchive: true
-      archiveArtifacts artifacts: 'videos_backup/**', allowEmptyArchive: true
-      archiveArtifacts artifacts: 'screenshots_backup/**', allowEmptyArchive: true
-      archiveArtifacts artifacts: 'allure-results/**', allowEmptyArchive: true
-      archiveArtifacts artifacts: 'allure-report/**', allowEmptyArchive: true
+      archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/**', allowEmptyArchive: true
+      archiveArtifacts artifacts: 'mi-proyecto-cypress/videos_backup/**', allowEmptyArchive: true
+      archiveArtifacts artifacts: 'mi-proyecto-cypress/screenshots_backup/**', allowEmptyArchive: true
+      archiveArtifacts artifacts: 'mi-proyecto-cypress/allure-results/**', allowEmptyArchive: true
+      archiveArtifacts artifacts: 'mi-proyecto-cypress/allure-report/**', allowEmptyArchive: true
 
       powershell '''
         Write-Host "=== XMLs detectados antes de JUnit ==="
         Get-ChildItem -Recurse "mi-proyecto-cypress/cypress/results/*.xml" -ErrorAction SilentlyContinue
       '''
 
+      // 🟦 Marcar como UNSTABLE para que la tabla registre los tests
       script {
         currentBuild.result = 'UNSTABLE'
       }
@@ -124,6 +115,7 @@ pipeline {
 
       allure includeProperties: false, jdk: '', results: [[path: 'mi-proyecto-cypress/allure-results']]
 
+      // 🟥 Marcar como FAILURE después de registrar los resultados
       script {
         currentBuild.result = 'FAILURE'
       }
