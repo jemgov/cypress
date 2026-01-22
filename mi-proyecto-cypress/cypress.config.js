@@ -1,12 +1,14 @@
 const { defineConfig } = require("cypress");
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 const { execSync } = require("child_process");
 const allureWriter = require("@shelex/cypress-allure-plugin/writer");
 
 module.exports = defineConfig({
 
-  // === REPORTER PRINCIPAL (Mochawesome) ===
+  // ============================================================
+  // REPORTER PRINCIPAL: MOCHAWESOME (ESTABLE)
+  // ============================================================
   reporter: "cypress-mochawesome-reporter",
   reporterOptions: {
     reportDir: "cypress/report",
@@ -15,28 +17,28 @@ module.exports = defineConfig({
     inlineAssets: true,
     saveJson: true,
     json: true,
-    reportPageTitle: "Test-Suite",
-    html: false
+    html: false,
+    saveHtml: false
   },
 
-  // === CONFIGURACIÓN DE VIDEOS Y SCREENSHOTS ===
+  // ============================================================
+  // VIDEOS Y SCREENSHOTS
+  // ============================================================
   video: true,
   videosFolder: "cypress/videos",
   screenshotOnRunFailure: true,
   screenshotsFolder: "cypress/screenshots",
 
-  // === ENV (ACTIVAR ALLURE) ===
+  // ============================================================
+  // ENV
+  // ============================================================
   env: {
-    url: "https://www.google.es/",
     allure: true
   },
 
-  // ======================================================
-  //  RETRIES ACTIVADOS PARA DETECTAR TESTS FLAKY EN ALLURE
-  // ======================================================
   retries: {
-    runMode: 2,   // Jenkins / CLI → reintenta 2 veces
-    openMode: 1   // Modo interactivo → 1 retry para ver flaky en local
+    runMode: 2,
+    openMode: 1
   },
 
   e2e: {
@@ -44,110 +46,120 @@ module.exports = defineConfig({
 
     setupNodeEvents(on, config) {
 
-      // === ACTIVAR ALLURE ===
-      console.log("🔥 Allure plugin cargado");
+      // ============================================================
+      // ACTIVAR ALLURE
+      // ============================================================
       allureWriter(on, config);
 
-      // === ACTIVAR MOCHAWESOME ===
-      require('cypress-mochawesome-reporter/plugin')(on);
+      // ============================================================
+      // ACTIVAR MOCHAWESOME
+      // ============================================================
+      require("cypress-mochawesome-reporter/plugin")(on);
 
-      // === BACKUPS SEGUROS (AFTER:SPEC) ===
-      on('after:spec', (spec, results) => {
+      // ============================================================
+      // GENERAR JUNIT PARA JENKINS
+      // ============================================================
+      on("after:spec", (spec, results) => {
+        if (!results || !results.tests) return;
 
-        const specName = path.basename(spec.relative, '.cy.js');
+        const junitDir = path.join(__dirname, "cypress/results");
+        if (!fs.existsSync(junitDir)) fs.mkdirSync(junitDir, { recursive: true });
 
-        // === BACKUP VIDEOS ===
-        const videosDir = path.join(__dirname, 'cypress/videos');
-        const backupVideosDir = path.join(__dirname, 'videos_backup', specName);
+        const junitFile = path.join(junitDir, `results-${Date.now()}.xml`);
 
-        fs.mkdirSync(backupVideosDir, { recursive: true });
+        const xml = `
+<testsuite name="${spec.name}" tests="${results.tests.length}">
+  ${results.tests
+    .map(t => `<testcase name="${t.title.join(" ")}" status="${t.state}" />`)
+    .join("\n")}
+</testsuite>`;
 
-        if (fs.existsSync(videosDir)) {
-          fs.readdirSync(videosDir).forEach(file => {
-            const srcPath = path.join(videosDir, file);
-
-            if (file.endsWith('-compressed.mp4')) {
-              try { fs.unlinkSync(srcPath); } catch {}
-              return;
-            }
-
-            if (!file.startsWith(specName)) return;
-
-            const destPath = path.join(backupVideosDir, file);
-            try {
-              fs.copyFileSync(srcPath, destPath);
-            } catch (err) {
-              console.error("⚠️ Error copiando video:", err.message);
-            }
-          });
-        }
-
-        // === BACKUP SCREENSHOTS ===
-        const realScreenshots = path.join(__dirname, "cypress/screenshots");
-        const backupScreenshotsDir = path.join(__dirname, 'screenshots_backup', specName);
-
-        fs.mkdirSync(backupScreenshotsDir, { recursive: true });
-
-        const copyScreenshotsRecursively = (dir) => {
-          fs.readdirSync(dir).forEach(file => {
-            const fullPath = path.join(dir, file);
-            const stat = fs.statSync(fullPath);
-
-            if (stat.isDirectory()) {
-              copyScreenshotsRecursively(fullPath);
-            } else if (file.endsWith(".png")) {
-              const destBackup = path.join(backupScreenshotsDir, `${Date.now()}_${file}`);
-              try {
-                fs.copyFileSync(fullPath, destBackup);
-              } catch (err) {
-                console.error("⚠️ Error copiando screenshot:", err.message);
-              }
-            }
-          });
-        };
-
-        if (fs.existsSync(realScreenshots)) {
-          copyScreenshotsRecursively(realScreenshots);
-        }
+        fs.writeFileSync(junitFile, xml);
       });
 
-      // === GENERAR SOLO MOCHAWESOME (AFTER:RUN) ===
-      on('after:run', () => {
-        try {
-          execSync(
-            `cmd /c "npx mochawesome-merge cypress/report/.jsons/*.json > cypress/report/mochawesome.json"`,
-            { stdio: "inherit" }
-          );
+      // ============================================================
+      // AFTER:RUN → MERGE MOCHAWESOME + GENERAR HTML + BACKUPS
+      // ============================================================
+      on("after:run", () => {
 
-          execSync(
-            `npx marge cypress/report/mochawesome.json --reportDir cypress/report --inline --reportFilename index.html`,
-            { stdio: "inherit" }
-          );
+        const reportDir = path.join(__dirname, "cypress/report");
+        const jsonsDir = path.join(reportDir, ".jsons");
 
-        } catch (error) {
-          console.error("⚠️ Error generando reportes:", error);
+        if (!fs.existsSync(jsonsDir)) {
+          fs.mkdirSync(jsonsDir, { recursive: true });
         }
 
-        // === ELIMINAR HTMLS NO DESEADOS ===
-        const deleteUnwantedHtml = (dir) => {
-          fs.readdirSync(dir).forEach(file => {
-            const fullPath = path.join(dir, file);
-            const stat = fs.statSync(fullPath);
+        // Mover JSONs generados por mochawesome
+        const jsonFiles = fs
+          .readdirSync(reportDir)
+          .filter(f => f.endsWith(".json") && f !== "mochawesome.json");
 
-            if (stat.isDirectory()) {
-              deleteUnwantedHtml(fullPath);
-            } else if (file.startsWith("mochawesome") && file.endsWith(".html") && file !== "index.html") {
-              fs.unlinkSync(fullPath);
+        jsonFiles.forEach(file => {
+          fs.renameSync(
+            path.join(reportDir, file),
+            path.join(jsonsDir, file)
+          );
+        });
+
+        // MERGE incluso si solo hay 1 JSON
+        try {
+          execSync(
+            `npx mochawesome-merge ${jsonsDir}/*.json > ${reportDir}/mochawesome.json`,
+            { stdio: "inherit" }
+          );
+
+          execSync(
+            `npx marge ${reportDir}/mochawesome.json --reportDir ${reportDir} --inline --reportFilename index.html`,
+            { stdio: "inherit" }
+          );
+        } catch (err) {
+          console.error("Error generando mochawesome:", err);
+        }
+
+        // ============================================================
+        // BACKUP DE VIDEOS ORGANIZADO POR FECHA Y NOMBRE DEL TEST
+        // ============================================================
+        const videosDir = path.join(__dirname, "cypress/videos");
+        const backupRoot = path.join(__dirname, "videos_backup");
+
+        if (!fs.existsSync(backupRoot)) {
+          fs.mkdirSync(backupRoot, { recursive: true });
+        }
+
+        // Fecha del run (YYYY-MM-DD)
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, "0");
+        const dd = String(today.getDate()).padStart(2, "0");
+        const dateFolder = `${yyyy}-${mm}-${dd}`;
+
+        const backupDateDir = path.join(backupRoot, dateFolder);
+        if (!fs.existsSync(backupDateDir)) {
+          fs.mkdirSync(backupDateDir, { recursive: true });
+        }
+
+        // Copiar vídeos
+        if (fs.existsSync(videosDir)) {
+          fs.readdirSync(videosDir).forEach(file => {
+            if (file.endsWith(".mp4")) {
+
+              const specName = file.replace(".mp4", "");
+              const specDir = path.join(backupDateDir, specName);
+
+              if (!fs.existsSync(specDir)) {
+                fs.mkdirSync(specDir, { recursive: true });
+              }
+
+              const src = path.join(videosDir, file);
+              const dest = path.join(specDir, file);
+
+              fs.copyFileSync(src, dest);
             }
           });
-        };
-
-        deleteUnwantedHtml(path.join(__dirname, "cypress/report"));
+        }
       });
 
       return config;
-    },
-
-    baseUrl: "https://example.cypress.io/",
-  },
+    }
+  }
 });
