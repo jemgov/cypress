@@ -40,11 +40,8 @@ pipeline {
               $code = $LASTEXITCODE
               Write-Host "Cypress terminó con código: $code"
 
-              # Marcar el build como UNSTABLE si falla
-              if ($code -ne 0) {
-                Write-Host "Cypress falló, marcamos como UNSTABLE para que Jenkins registre los tests"
-                exit 0
-              }
+              # No abortar el pipeline: permitir que Jenkins registre los resultados
+              exit 0
             '''
           }
         }
@@ -109,11 +106,18 @@ pipeline {
         Get-ChildItem -Recurse "mi-proyecto-cypress/cypress/results/*.xml" -ErrorAction SilentlyContinue
       '''
 
+      // 🟦 Marcar como UNSTABLE para que la tabla registre los tests
+      script {
+        currentBuild.result = 'UNSTABLE'
+      }
+
+      // 📊 Registrar resultados de tests
       junit testResults: 'mi-proyecto-cypress/cypress/results/*.xml', allowEmptyResults: true, keepLongStdio: true
 
+      // Allure
       allure includeProperties: false, jdk: '', results: [[path: 'mi-proyecto-cypress/allure-results']]
 
-      // ✅ Marcar el build como FAILURE para mantener la lógica del job
+      // 🟥 Marcar como FAILURE después de registrar los resultados
       script {
         currentBuild.result = 'FAILURE'
       }
