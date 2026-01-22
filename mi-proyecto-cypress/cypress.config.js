@@ -57,58 +57,23 @@ module.exports = defineConfig({
       require("cypress-mochawesome-reporter/plugin")(on);
 
       // ============================================================
-      // GENERAR JUNIT PARA JENKINS (CORREGIDO)
+      // GENERAR JUNIT PARA JENKINS
       // ============================================================
       on("after:spec", (spec, results) => {
+        if (!results || !results.tests) return;
 
         const junitDir = path.join(__dirname, "cypress/results");
-        if (!fs.existsSync(junitDir)) {
-          fs.mkdirSync(junitDir, { recursive: true });
-        }
+        if (!fs.existsSync(junitDir)) fs.mkdirSync(junitDir, { recursive: true });
 
-        // Nombre REAL del spec (corregido)
-        const specName = path.basename(
-          spec.relative || spec.specFile || spec.name || `spec-${Date.now()}`
-        );
+        const junitFile = path.join(junitDir, `results-${Date.now()}.xml`);
 
-        const safeName = specName.replace(/[^a-zA-Z0-9]/g, "_");
-        const junitFile = path.join(junitDir, `results-${safeName}.xml`);
-
-        // Si el spec falla antes de ejecutar tests → XML mínimo
-        if (!results || !results.tests || results.tests.length === 0) {
-          const xml = `
-<testsuite name="${specName}" tests="1" failures="1">
-  <testcase name="${specName}">
-    <failure message="Spec failed before running tests">Spec failed before running tests</failure>
-  </testcase>
+        const xml = `
+<testsuite name="${spec.name}" tests="${results.tests.length}">
+  ${results.tests
+    .map(t => `<testcase name="${t.title.join(" ")}" status="${t.state}" />`)
+    .join("\n")}
 </testsuite>`;
-          fs.writeFileSync(junitFile, xml);
-          return;
-        }
 
-        // XML estándar cuando sí hay tests
-        let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-        xml += `<testsuite name="${specName}" tests="${results.tests.length}" failures="${results.stats.failures}" skipped="${results.stats.skipped}" time="${results.stats.wallClockDuration / 1000}">\n`;
-
-        results.tests.forEach((test) => {
-          const testName = test.title.join(" ");
-          const duration = (test.wallClockDuration || 0) / 1000;
-
-          xml += `  <testcase classname="${specName}" name="${testName}" time="${duration}">`;
-
-          if (test.state === "failed") {
-            const error = test.displayError || "Test failed";
-            xml += `\n    <failure message="${error.replace(/"/g, "'")}">${error}</failure>\n  `;
-          }
-
-          if (test.state === "skipped") {
-            xml += `\n    <skipped />\n  `;
-          }
-
-          xml += `</testcase>\n`;
-        });
-
-        xml += `</testsuite>`;
         fs.writeFileSync(junitFile, xml);
       });
 
