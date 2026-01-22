@@ -96,7 +96,17 @@ pipeline {
       archiveArtifacts artifacts: 'mi-proyecto-cypress/allure-results/**', allowEmptyArchive: true
       archiveArtifacts artifacts: 'mi-proyecto-cypress/allure-report/**', allowEmptyArchive: true
 
-      // ✅ BLOQUE JUNIT: Jenkins indexa correctamente los tests (éxitos, fallos, skipped)
+      // ============================================================
+      // 🔍 NUEVO: Diagnóstico antes del JUnit
+      // ============================================================
+      powershell '''
+        Write-Host "=== XMLs detectados antes de JUnit ==="
+        Get-ChildItem -Recurse "mi-proyecto-cypress/cypress/results/*.xml" -ErrorAction SilentlyContinue
+      '''
+
+      // ============================================================
+      // 📊 BLOQUE JUNIT: Jenkins indexa los tests
+      // ============================================================
       junit testResults: 'mi-proyecto-cypress/cypress/results/*.xml', allowEmptyResults: true, keepLongStdio: true
 
       // Allure
