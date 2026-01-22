@@ -57,7 +57,7 @@ module.exports = defineConfig({
       require("cypress-mochawesome-reporter/plugin")(on);
 
       // ============================================================
-      // GENERAR JUNIT PARA JENKINS (ROBUSTO)
+      // GENERAR JUNIT PARA JENKINS (COMPATIBLE 100%)
       // ============================================================
       on("after:spec", (spec, results) => {
 
@@ -83,11 +83,21 @@ module.exports = defineConfig({
           return;
         }
 
-        // XML estándar cuando sí hay tests ejecutados
+        // Contar fallos reales
+        const failures = results.tests.filter(t => t.state === "failed").length;
+
+        // XML estándar con soporte completo para Jenkins
         const xml = `
-<testsuite name="${specName}" tests="${results.tests.length}">
+<testsuite name="${specName}" tests="${results.tests.length}" failures="${failures}">
   ${results.tests
-    .map(t => `<testcase name="${t.title.join(" ")}" status="${t.state}" />`)
+    .map(t => {
+      const name = t.title.join(" ");
+      if (t.state === "failed") {
+        return `<testcase name="${name}"><failure message="Test failed">Test failed</failure></testcase>`;
+      } else {
+        return `<testcase name="${name}"/>`;
+      }
+    })
     .join("\n")}
 </testsuite>`;
 
