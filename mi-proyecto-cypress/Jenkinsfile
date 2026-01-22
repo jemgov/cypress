@@ -36,7 +36,12 @@ pipeline {
             powershell '''
               Write-Host "=== Ejecutando pruebas Cypress ==="
               npx cypress run --spec "$env:TEST_SPEC"
-              Write-Host "=== Pruebas finalizadas ==="
+
+              $code = $LASTEXITCODE
+              Write-Host "Cypress terminó con código: $code"
+
+              # No abortar el pipeline
+              exit 0
             '''
           }
         }
@@ -96,11 +101,24 @@ pipeline {
       archiveArtifacts artifacts: 'mi-proyecto-cypress/allure-results/**', allowEmptyArchive: true
       archiveArtifacts artifacts: 'mi-proyecto-cypress/allure-report/**', allowEmptyArchive: true
 
-      // ✅ BLOQUE JUNIT: Jenkins indexa correctamente los tests (éxitos, fallos, skipped)
+      powershell '''
+        Write-Host "=== XMLs detectados antes de JUnit ==="
+        Get-ChildItem -Recurse "mi-proyecto-cypress/cypress/results/*.xml" -ErrorAction SilentlyContinue
+      '''
+
+      // 🟦 Marcar como UNSTABLE para que la tabla registre los tests
+      script {
+        currentBuild.result = 'UNSTABLE'
+      }
+
       junit testResults: 'mi-proyecto-cypress/cypress/results/*.xml', allowEmptyResults: true, keepLongStdio: true
 
-      // Allure
       allure includeProperties: false, jdk: '', results: [[path: 'mi-proyecto-cypress/allure-results']]
+
+      // 🟥 Marcar como FAILURE después de registrar los resultados
+      script {
+        currentBuild.result = 'FAILURE'
+      }
     }
   }
 }
