@@ -50,11 +50,13 @@ module.exports = defineConfig({
       // ACTIVAR ALLURE
       // ============================================================
       allureWriter(on, config);
+      console.log("🔥 Allure plugin cargado");
 
       // ============================================================
       // ACTIVAR MOCHAWESOME
       // ============================================================
       require("cypress-mochawesome-reporter/plugin")(on);
+      console.log("📊 Mochawesome plugin cargado");
 
       // ============================================================
       // GENERAR JUNIT PARA JENKINS (COMPATIBLE 100%)
