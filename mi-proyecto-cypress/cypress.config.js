@@ -57,22 +57,28 @@ module.exports = defineConfig({
       require("cypress-mochawesome-reporter/plugin")(on);
 
       // ============================================================
-      // 🔥 NUEVO HOOK JUNIT — COMPATIBLE CON JENKINS
+      // GENERAR JUNIT PARA JENKINS (CORREGIDO)
       // ============================================================
       on("after:spec", (spec, results) => {
-        const junitDir = path.join(__dirname, "cypress/results");
-        if (!fs.existsSync(junitDir)) fs.mkdirSync(junitDir, { recursive: true });
 
-        const junitFile = path.join(
-          junitDir,
-          `results-${spec.name.replace(/[^a-zA-Z0-9]/g, "_")}.xml`
+        const junitDir = path.join(__dirname, "cypress/results");
+        if (!fs.existsSync(junitDir)) {
+          fs.mkdirSync(junitDir, { recursive: true });
+        }
+
+        // Nombre REAL del spec (corregido)
+        const specName = path.basename(
+          spec.relative || spec.specFile || spec.name || `spec-${Date.now()}`
         );
 
-        // Si el spec falla antes de ejecutar tests → generamos XML mínimo
+        const safeName = specName.replace(/[^a-zA-Z0-9]/g, "_");
+        const junitFile = path.join(junitDir, `results-${safeName}.xml`);
+
+        // Si el spec falla antes de ejecutar tests → XML mínimo
         if (!results || !results.tests || results.tests.length === 0) {
           const xml = `
-<testsuite name="${spec.name}" tests="1" failures="1">
-  <testcase name="${spec.name}">
+<testsuite name="${specName}" tests="1" failures="1">
+  <testcase name="${specName}">
     <failure message="Spec failed before running tests">Spec failed before running tests</failure>
   </testcase>
 </testsuite>`;
@@ -82,13 +88,13 @@ module.exports = defineConfig({
 
         // XML estándar cuando sí hay tests
         let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-        xml += `<testsuite name="${spec.name}" tests="${results.tests.length}" failures="${results.stats.failures}" skipped="${results.stats.skipped}" time="${results.stats.wallClockDuration / 1000}">\n`;
+        xml += `<testsuite name="${specName}" tests="${results.tests.length}" failures="${results.stats.failures}" skipped="${results.stats.skipped}" time="${results.stats.wallClockDuration / 1000}">\n`;
 
         results.tests.forEach((test) => {
           const testName = test.title.join(" ");
           const duration = (test.wallClockDuration || 0) / 1000;
 
-          xml += `  <testcase classname="${spec.name}" name="${testName}" time="${duration}">`;
+          xml += `  <testcase classname="${specName}" name="${testName}" time="${duration}">`;
 
           if (test.state === "failed") {
             const error = test.displayError || "Test failed";
