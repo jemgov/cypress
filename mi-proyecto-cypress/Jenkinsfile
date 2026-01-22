@@ -96,7 +96,7 @@ pipeline {
       archiveArtifacts artifacts: 'mi-proyecto-cypress/allure-results/**', allowEmptyArchive: true
       archiveArtifacts artifacts: 'mi-proyecto-cypress/allure-report/**', allowEmptyArchive: true
 
-      // ✅ BLOQUE AÑADIDO: ahora Jenkins indexa los XML JUnit correctamente
+      // ✅ BLOQUE JUNIT: Jenkins indexa correctamente los tests (éxitos, fallos, skipped)
       junit testResults: 'mi-proyecto-cypress/cypress/results/*.xml', allowEmptyResults: true, keepLongStdio: true
 
       // Allure
