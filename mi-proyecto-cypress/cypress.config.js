@@ -16,14 +16,15 @@ module.exports = defineConfig({
     saveJson: true,
     json: true,
     reportPageTitle: "Test-Suite",
-    html: false
+    html: false,          // ❗ Evita que cree report/report
+    saveHtml: false       // ❗ Evita HTML duplicado
   },
 
   // === CONFIGURACIÓN DE VIDEOS Y SCREENSHOTS ===
   video: true,
-  videosFolder: "cypress/videos",
+  videosFolder: "cypress/report/videos",        // 🔥 Ahora dentro de /report
   screenshotOnRunFailure: true,
-  screenshotsFolder: "cypress/screenshots",
+  screenshotsFolder: "cypress/report/screenshots",
 
   // === ENV (ACTIVAR ALLURE) ===
   env: {
@@ -31,12 +32,10 @@ module.exports = defineConfig({
     allure: true
   },
 
-  // ======================================================
-  //  RETRIES ACTIVADOS PARA DETECTAR TESTS FLAKY EN ALLURE
-  // ======================================================
+  // === RETRIES ===
   retries: {
-    runMode: 2,   // Jenkins / CLI → reintenta 2 veces
-    openMode: 1   // Modo interactivo → 1 retry para ver flaky en local
+    runMode: 2,
+    openMode: 1
   },
 
   e2e: {
@@ -51,13 +50,15 @@ module.exports = defineConfig({
       // === ACTIVAR MOCHAWESOME ===
       require('cypress-mochawesome-reporter/plugin')(on);
 
-      // === BACKUPS SEGUROS (AFTER:SPEC) ===
+      // ============================================================
+      //  AFTER:SPEC → BACKUPS + GENERAR JUNIT PARA JENKINS
+      // ============================================================
       on('after:spec', (spec, results) => {
 
         const specName = path.basename(spec.relative, '.cy.js');
 
         // === BACKUP VIDEOS ===
-        const videosDir = path.join(__dirname, 'cypress/videos');
+        const videosDir = path.join(__dirname, 'cypress/report/videos');
         const backupVideosDir = path.join(__dirname, 'videos_backup', specName);
 
         fs.mkdirSync(backupVideosDir, { recursive: true });
@@ -83,7 +84,7 @@ module.exports = defineConfig({
         }
 
         // === BACKUP SCREENSHOTS ===
-        const realScreenshots = path.join(__dirname, "cypress/screenshots");
+        const realScreenshots = path.join(__dirname, "cypress/report/screenshots");
         const backupScreenshotsDir = path.join(__dirname, 'screenshots_backup', specName);
 
         fs.mkdirSync(backupScreenshotsDir, { recursive: true });
@@ -109,13 +110,58 @@ module.exports = defineConfig({
         if (fs.existsSync(realScreenshots)) {
           copyScreenshotsRecursively(realScreenshots);
         }
+
+        // ============================================================
+        //  GENERAR JUNIT PARA JENKINS (ESTADÍSTICAS)
+        // ============================================================
+        const junitDir = path.join(__dirname, 'cypress/results');
+        fs.mkdirSync(junitDir, { recursive: true });
+
+        const junitFile = path.join(junitDir, `${specName}.xml`);
+
+        let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+        xml += `<testsuite name="${specName}" tests="${results.tests.length}">\n`;
+
+        results.tests.forEach(test => {
+          const testName = test.title.join(' ');
+          xml += `  <testcase name="${testName}">\n`;
+
+          if (test.state === 'failed') {
+            xml += `    <failure message="${test.displayError || 'Error'}"></failure>\n`;
+          }
+
+          xml += `  </testcase>\n`;
+        });
+
+        xml += `</testsuite>\n`;
+
+        fs.writeFileSync(junitFile, xml, 'utf-8');
       });
 
-      // === GENERAR SOLO MOCHAWESOME (AFTER:RUN) ===
+      // ============================================================
+      //  AFTER:RUN → MERGE MOCHAWESOME + GENERAR HTML
+      // ============================================================
       on('after:run', () => {
+
+        const jsonsDir = path.join(__dirname, "cypress/report/.jsons");
+        const reportDir = path.join(__dirname, "cypress/report");
+
+        // === MOVER JSONS DESDE .jsons A /report ===
+        if (fs.existsSync(jsonsDir)) {
+          fs.readdirSync(jsonsDir).forEach(file => {
+            if (file.endsWith(".json")) {
+              fs.renameSync(
+                path.join(jsonsDir, file),
+                path.join(reportDir, file)
+              );
+            }
+          });
+        }
+
+        // === MERGE ===
         try {
           execSync(
-            `cmd /c "npx mochawesome-merge cypress/report/.jsons/*.json > cypress/report/mochawesome.json"`,
+            `cmd /c "npx mochawesome-merge cypress/report/*.json > cypress/report/mochawesome.json"`,
             { stdio: "inherit" }
           );
 
@@ -142,7 +188,7 @@ module.exports = defineConfig({
           });
         };
 
-        deleteUnwantedHtml(path.join(__dirname, "cypress/report"));
+        deleteUnwantedHtml(reportDir);
       });
 
       return config;
