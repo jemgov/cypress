@@ -40,7 +40,7 @@ pipeline {
               $code = $LASTEXITCODE
               Write-Host "Cypress terminó con código: $code"
 
-              # No abortar el pipeline
+              # No abortar el pipeline aunque falle
               exit 0
             '''
           }
@@ -106,7 +106,7 @@ pipeline {
         Get-ChildItem -Recurse "mi-proyecto-cypress/cypress/results/*.xml" -ErrorAction SilentlyContinue
       '''
 
-      // 🟦 Marcar como UNSTABLE para que la tabla registre los tests
+      // 🟦 Estado necesario para que la Test Statistics Grid muestre los fallos
       script {
         currentBuild.result = 'UNSTABLE'
       }
@@ -114,11 +114,6 @@ pipeline {
       junit testResults: 'mi-proyecto-cypress/cypress/results/*.xml', allowEmptyResults: true, keepLongStdio: true
 
       allure includeProperties: false, jdk: '', results: [[path: 'mi-proyecto-cypress/allure-results']]
-
-      // 🟥 Marcar como FAILURE después de registrar los resultados
-      script {
-        currentBuild.result = 'FAILURE'
-      }
     }
   }
 }
