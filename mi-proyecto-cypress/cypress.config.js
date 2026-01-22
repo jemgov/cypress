@@ -7,18 +7,13 @@ const allureWriter = require("@shelex/cypress-allure-plugin/writer");
 module.exports = defineConfig({
 
   // ============================================================
-  // REPORTER PRINCIPAL: MOCHAWESOME (ESTABLE)
+  // REPORTER PRINCIPAL: MOCHAWESOME
   // ============================================================
   reporter: "cypress-mochawesome-reporter",
   reporterOptions: {
     reportDir: "cypress/report",
     charts: true,
-    embeddedScreenshots: true,
-    inlineAssets: true,
-    saveJson: true,
-    json: true,
-    html: false,
-    saveHtml: false
+    saveJson: true
   },
 
   // ============================================================
@@ -28,13 +23,6 @@ module.exports = defineConfig({
   videosFolder: "cypress/videos",
   screenshotOnRunFailure: true,
   screenshotsFolder: "cypress/screenshots",
-
-  // ============================================================
-  // ENV
-  // ============================================================
-  env: {
-    allure: true
-  },
 
   retries: {
     runMode: 2,
@@ -50,16 +38,14 @@ module.exports = defineConfig({
       // ACTIVAR ALLURE
       // ============================================================
       allureWriter(on, config);
-      console.log("🔥 Allure plugin cargado");
 
       // ============================================================
       // ACTIVAR MOCHAWESOME
       // ============================================================
       require("cypress-mochawesome-reporter/plugin")(on);
-      console.log("📊 Mochawesome plugin cargado");
 
       // ============================================================
-      // GENERAR JUNIT PARA JENKINS (COMPATIBLE 100%)
+      // GENERAR JUNIT PARA JENKINS
       // ============================================================
       on("after:spec", (spec, results) => {
 
@@ -73,7 +59,6 @@ module.exports = defineConfig({
         const safeName = specName.replace(/[^a-zA-Z0-9]/g, "_");
         const junitFile = path.join(junitDir, `results-${safeName}.xml`);
 
-        // ⚠️ Si el spec falla ANTES de ejecutar tests → generar XML mínimo
         if (!results || !results.tests || results.tests.length === 0) {
           const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
@@ -89,10 +74,8 @@ module.exports = defineConfig({
           return;
         }
 
-        // Contar fallos reales
         const failures = results.tests.filter(t => t.state === "failed").length;
 
-        // XML estándar con soporte completo para Jenkins
         const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
   <testsuite name="${specName}" tests="${results.tests.length}" failures="${failures}" errors="0" skipped="0">
@@ -130,7 +113,6 @@ module.exports = defineConfig({
           fs.mkdirSync(jsonsDir, { recursive: true });
         }
 
-        // Mover JSONs generados por mochawesome
         const jsonFiles = fs
           .readdirSync(reportDir)
           .filter(f => f.endsWith(".json") && f !== "mochawesome.json");
@@ -142,7 +124,6 @@ module.exports = defineConfig({
           );
         });
 
-        // MERGE incluso si solo hay 1 JSON
         try {
           execSync(
             `npx mochawesome-merge ${jsonsDir}/*.json > ${reportDir}/mochawesome.json`,
@@ -158,7 +139,7 @@ module.exports = defineConfig({
         }
 
         // ============================================================
-        // BACKUP DE VIDEOS ORGANIZADO POR FECHA Y NOMBRE DEL TEST
+        // BACKUP DE VIDEOS
         // ============================================================
         const videosDir = path.join(__dirname, "cypress/videos");
         const backupRoot = path.join(__dirname, "videos_backup");
@@ -167,7 +148,6 @@ module.exports = defineConfig({
           fs.mkdirSync(backupRoot, { recursive: true });
         }
 
-        // Fecha del run (YYYY-MM-DD)
         const today = new Date();
         const yyyy = today.getFullYear();
         const mm = String(today.getMonth() + 1).padStart(2, "0");
@@ -179,7 +159,6 @@ module.exports = defineConfig({
           fs.mkdirSync(backupDateDir, { recursive: true });
         }
 
-        // Copiar vídeos
         if (fs.existsSync(videosDir)) {
           fs.readdirSync(videosDir).forEach(file => {
             if (file.endsWith(".mp4")) {
