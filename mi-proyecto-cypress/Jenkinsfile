@@ -106,11 +106,7 @@ pipeline {
         Get-ChildItem -Recurse "mi-proyecto-cypress/cypress/results/*.xml" -ErrorAction SilentlyContinue
       '''
 
-      // 🟦 Estado necesario para que la Test Statistics Grid muestre los fallos
-      script {
-        currentBuild.result = 'UNSTABLE'
-      }
-
+      // 🟦 Dejamos que JUnit decida el estado del build
       junit testResults: 'mi-proyecto-cypress/cypress/results/*.xml', allowEmptyResults: true, keepLongStdio: true
 
       allure includeProperties: false, jdk: '', results: [[path: 'mi-proyecto-cypress/allure-results']]
