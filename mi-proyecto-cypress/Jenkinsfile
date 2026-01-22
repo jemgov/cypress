@@ -60,18 +60,6 @@ pipeline {
       }
     }
 
-    stage('Generar reporte Allure') {
-      steps {
-        dir('mi-proyecto-cypress') {
-          powershell '''
-            Write-Host "=== Generando reporte Allure ==="
-            allure generate allure-results --clean -o allure-report
-            Write-Host "=== Reporte Allure generado ==="
-          '''
-        }
-      }
-    }
-
     stage('Diagnóstico de artefactos') {
       steps {
         dir('mi-proyecto-cypress') {
