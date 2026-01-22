@@ -54,7 +54,10 @@ pipeline {
             Write-Host "=== Copiando historial de Allure (si existe) ==="
 
             if (Test-Path "allure-report/history") {
+              Write-Host "Historial encontrado. Copiando..."
               Copy-Item -Recurse -Force "allure-report/history" "allure-results/history"
+            } else {
+              Write-Host "No existe historial previo."
             }
           '''
         }
@@ -66,10 +69,21 @@ pipeline {
         dir('mi-proyecto-cypress') {
           powershell '''
             Write-Host "=== Diagnóstico de artefactos ==="
-            Get-ChildItem -Recurse cypress/report -ErrorAction SilentlyContinue
+
+            Write-Host "--- Videos Backup ---"
             Get-ChildItem -Recurse videos_backup -ErrorAction SilentlyContinue
+
+            Write-Host "--- Screenshots Backup ---"
             Get-ChildItem -Recurse screenshots_backup -ErrorAction SilentlyContinue
+
+            Write-Host "--- Mochawesome Report ---"
+            Get-ChildItem -Recurse cypress/report -ErrorAction SilentlyContinue
+
+            Write-Host "--- Allure Results ---"
             Get-ChildItem -Recurse allure-results -ErrorAction SilentlyContinue
+
+            Write-Host "--- Allure Report (HTML) ---"
+            Get-ChildItem -Recurse allure-report -ErrorAction SilentlyContinue
           '''
         }
       }
@@ -93,14 +107,22 @@ pipeline {
     always {
       echo '=== Archivando artefactos ==='
 
+      // Archivar artefactos sin duplicarlos
       archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/**', allowEmptyArchive: true
       archiveArtifacts artifacts: 'mi-proyecto-cypress/videos_backup/**', allowEmptyArchive: true
       archiveArtifacts artifacts: 'mi-proyecto-cypress/screenshots_backup/**', allowEmptyArchive: true
       archiveArtifacts artifacts: 'mi-proyecto-cypress/allure-results/**', allowEmptyArchive: true
       archiveArtifacts artifacts: 'mi-proyecto-cypress/allure-report/**', allowEmptyArchive: true
 
+      powershell '''
+        Write-Host "=== XMLs detectados antes de JUnit ==="
+        Get-ChildItem -Recurse "mi-proyecto-cypress/cypress/results/*.xml" -ErrorAction SilentlyContinue
+      '''
+
+      // JUnit decide el estado del build
       junit testResults: 'mi-proyecto-cypress/cypress/results/*.xml', allowEmptyResults: true, keepLongStdio: true
 
+      // Publicar Allure
       allure includeProperties: false, jdk: '', results: [[path: 'mi-proyecto-cypress/allure-results']]
     }
   }
