@@ -95,10 +95,31 @@ pipeline {
     always {
       echo '=== Archivando artefactos ==='
 
-      // 🟩 Archivado explícito del index.html de Mochawesome
-      archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/index.html', allowEmptyArchive: false
+      // ============================================================
+      // COPIAR INDEX.HTML A LA RAÍZ PARA QUE JENKINS LO DETECTE
+      // ============================================================
+      powershell '''
+        Write-Host "=== Copiando index.html a la raíz del workspace para que Jenkins lo detecte ==="
 
-      // 🟦 Archivado del resto de artefactos (videos, screenshots, Allure, JSONs)
+        $source = "mi-proyecto-cypress/cypress/report/index.html"
+        $target = "index.html"
+
+        if (Test-Path $source) {
+          Copy-Item -Force $source $target
+          Write-Host "✔ index.html copiado correctamente"
+        } else {
+          Write-Host "⚠ No se encontró index.html en la ruta esperada"
+        }
+      '''
+
+      // ============================================================
+      // ARCHIVAR EL INDEX.HTML PRINCIPAL (APARECERÁ EN LA LISTA)
+      // ============================================================
+      archiveArtifacts artifacts: 'index.html', allowEmptyArchive: false
+
+      // ============================================================
+      // ARCHIVAR EL RESTO DE ARTEFACTOS
+      // ============================================================
       archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/**', allowEmptyArchive: true
       archiveArtifacts artifacts: 'mi-proyecto-cypress/videos_backup/**', allowEmptyArchive: true
       archiveArtifacts artifacts: 'mi-proyecto-cypress/screenshots_backup/**', allowEmptyArchive: true
@@ -110,7 +131,7 @@ pipeline {
         Get-ChildItem -Recurse "mi-proyecto-cypress/cypress/results/*.xml" -ErrorAction SilentlyContinue
       '''
 
-      // 🟦 JUnit decide el estado del build (SUCCESS o UNSTABLE)
+      // JUnit decide el estado del build
       junit testResults: 'mi-proyecto-cypress/cypress/results/*.xml', allowEmptyResults: true, keepLongStdio: true
 
       allure includeProperties: false, jdk: '', results: [[path: 'mi-proyecto-cypress/allure-results']]
