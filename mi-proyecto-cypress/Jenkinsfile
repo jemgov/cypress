@@ -37,13 +37,14 @@ pipeline {
               Write-Host "=== Ejecutando pruebas Cypress ==="
               npx cypress run --spec "$env:TEST_SPEC"
 
-              # Guardamos el código de salida de Cypress
               $code = $LASTEXITCODE
               Write-Host "Cypress terminó con código: $code"
 
-              # No abortar el pipeline: permitir que Jenkins procese el XML
-              # El fallo se marcará al final del pipeline
-              exit 0
+              # Marcar el build como UNSTABLE si falla
+              if ($code -ne 0) {
+                Write-Host "Cypress falló, marcamos como UNSTABLE para que Jenkins registre los tests"
+                exit 0
+              }
             '''
           }
         }
@@ -103,19 +104,16 @@ pipeline {
       archiveArtifacts artifacts: 'mi-proyecto-cypress/allure-results/**', allowEmptyArchive: true
       archiveArtifacts artifacts: 'mi-proyecto-cypress/allure-report/**', allowEmptyArchive: true
 
-      // 🔍 Diagnóstico antes del JUnit
       powershell '''
         Write-Host "=== XMLs detectados antes de JUnit ==="
         Get-ChildItem -Recurse "mi-proyecto-cypress/cypress/results/*.xml" -ErrorAction SilentlyContinue
       '''
 
-      // 📊 Registrar resultados de tests SIEMPRE
       junit testResults: 'mi-proyecto-cypress/cypress/results/*.xml', allowEmptyResults: true, keepLongStdio: true
 
-      // Allure
       allure includeProperties: false, jdk: '', results: [[path: 'mi-proyecto-cypress/allure-results']]
 
-      // ❗ Marcar el build como FAILURE si Cypress falló
+      // ✅ Marcar el build como FAILURE para mantener la lógica del job
       script {
         currentBuild.result = 'FAILURE'
       }
