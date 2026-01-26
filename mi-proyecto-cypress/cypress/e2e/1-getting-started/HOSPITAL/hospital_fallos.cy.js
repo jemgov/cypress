@@ -10,6 +10,10 @@ describe('HUDR_2.3 – Fallos y pendientes', () => {
     cy.fixture('medicamentos').then(data => medicamentos = data);
   });
 
+  // ======================================================
+  //  FAILED (7) — Etiquetas colocadas ANTES de la lógica
+  // ======================================================
+
   it('F29 - Paciente inexistente debe existir (fallo esperado)', () => {
     cy.allure().owner('Marta Rodríguez');
     cy.allure().severity('critical');
@@ -69,37 +73,9 @@ describe('HUDR_2.3 – Fallos y pendientes', () => {
     expect(medicamentos.filter(m => !m.critico).length).to.equal(0);
   });
 
-  it('S36 - Pendiente de integración con laboratorio', function () {
-    cy.allure().owner('Marta Rodríguez');
-    cy.allure().severity('minor');
-    cy.allure().feature('hospital');
-
-    this.skip();
-  });
-
-  it('S37 - Pendiente de agenda quirúrgica', function () {
-    cy.allure().owner('Jesús Gómez');
-    cy.allure().severity('minor');
-    cy.allure().feature('urgencias');
-
-    this.skip();
-  });
-
-  it('S38 - Pendiente de reglas de priorización', function () {
-    cy.allure().owner('José Manuel González');
-    cy.allure().severity('minor');
-    cy.allure().feature('UCI');
-
-    this.skip();
-  });
-
-  it('S39 - Pendiente de informes radiológicos', function () {
-    cy.allure().owner('Jesús Gómez');
-    cy.allure().severity('minor');
-    cy.allure().feature('hospital');
-
-    this.skip();
-  });
+  // ======================================================
+  //  BROKEN (1)
+  // ======================================================
 
   it('B40 - Error inesperado en servicio de camas', () => {
     cy.allure().owner('Alberto Marchena');
@@ -107,6 +83,38 @@ describe('HUDR_2.3 – Fallos y pendientes', () => {
     cy.allure().feature('UCI');
 
     throw new Error('Error inesperado en módulo de gestión de camas');
+  });
+
+  // ======================================================
+  //  SKIPPED (4) — Sin cambios
+  // ======================================================
+
+  it('S36 - Pendiente de integración con laboratorio', function () {
+    cy.allure().owner('Marta Rodríguez');
+    cy.allure().severity('minor');
+    cy.allure().feature('hospital');
+    this.skip();
+  });
+
+  it('S37 - Pendiente de agenda quirúrgica', function () {
+    cy.allure().owner('Jesús Gómez');
+    cy.allure().severity('minor');
+    cy.allure().feature('urgencias');
+    this.skip();
+  });
+
+  it('S38 - Pendiente de reglas de priorización', function () {
+    cy.allure().owner('José Manuel González');
+    cy.allure().severity('minor');
+    cy.allure().feature('UCI');
+    this.skip();
+  });
+
+  it('S39 - Pendiente de informes radiológicos', function () {
+    cy.allure().owner('Jesús Gómez');
+    cy.allure().severity('minor');
+    cy.allure().feature('hospital');
+    this.skip();
   });
 
 });
