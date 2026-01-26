@@ -22,7 +22,7 @@ module.exports = defineConfig({
   // ============================================================
   reporter: "cypress-mochawesome-reporter",
   reporterOptions: {
-    reportDir: "cypress/report/.jsons",   // JSONs en carpeta oculta
+    reportDir: "cypress/report/json",   // JSONs en carpeta estable
     saveJson: true,
     html: false,                 // NO generar HTML
     charts: false,
