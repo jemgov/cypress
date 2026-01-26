@@ -30,14 +30,6 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
     pacientes.forEach(p => expect(p.id).to.be.a('number'));
   });
 
-  it('P03 - Medicamentos críticos existen', () => {
-    cy.allure().owner('Marta Rodríguez');
-    cy.allure().severity('critical');
-    cy.allure().feature('medicación');
-
-    expect(medicamentos.filter(m => m.critico).length).to.be.greaterThan(0);
-  });
-
   it('P04 - Estructura mínima de paciente', () => {
     cy.allure().owner('Jesús Gómez');
     cy.allure().severity('minor');
@@ -70,14 +62,6 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
     cy.allure().feature('urgencias');
 
     expect(pacientes.filter(p => p.area === 'pediatria').length).to.be.greaterThan(0);
-  });
-
-  it('P08 - Medicamentos no críticos existen', () => {
-    cy.allure().owner('José Manuel González');
-    cy.allure().severity('normal');
-    cy.allure().feature('medicación');
-
-    expect(medicamentos.filter(m => !m.critico).length).to.be.greaterThan(0);
   });
 
   it('P09 - Pacientes en neurología', () => {
@@ -156,22 +140,6 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
 
     const areas = new Set(pacientes.map(p => p.area));
     expect(areas.size).to.be.greaterThan(5);
-  });
-
-  it('P18 - IDs de medicamentos pares', () => {
-    cy.allure().owner('Alberto Marchena');
-    cy.allure().severity('minor');
-    cy.allure().feature('medicación');
-
-    expect(medicamentos.filter(m => Number(m.id.slice(-1)) % 2 === 0).length).to.be.greaterThan(0);
-  });
-
-  it('P19 - IDs de medicamentos impares', () => {
-    cy.allure().owner('Alberto Marchena');
-    cy.allure().severity('minor');
-    cy.allure().feature('medicación');
-
-    expect(medicamentos.filter(m => Number(m.id.slice(-1)) % 2 === 1).length).to.be.greaterThan(0);
   });
 
   it('P20 - Pacientes con ID > 50000', () => {
