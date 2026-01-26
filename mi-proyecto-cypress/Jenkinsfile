@@ -27,7 +27,7 @@ pipeline {
             Remove-Item -Recurse -Force "videos_backup" -ErrorAction SilentlyContinue
             Remove-Item -Recurse -Force "screenshots_backup" -ErrorAction SilentlyContinue
 
-            # 🔥 FIX DEFINITIVO: crear carpeta JSON antes de Cypress
+            # Crear carpeta JSON antes de Cypress
             New-Item -ItemType Directory -Force -Path "cypress/report/json" | Out-Null
           '''
         }
@@ -65,15 +65,26 @@ pipeline {
     stage('Generar reporte Mochawesome') {
       steps {
         dir('mi-proyecto-cypress') {
-          powershell '''
-            if (Test-Path "cypress/report/json") {
-              $jsons = Get-ChildItem "cypress/report/json" -Filter *.json
-              if ($jsons.Count -gt 0) {
-                npx mochawesome-merge "cypress/report/json/*.json" > "cypress/report/mochawesome.json"
-                npx marge "cypress/report/mochawesome.json" --reportDir "cypress/mochawesome-html" --reportFilename "index"
+
+          // 🔥 Esta es la modificación clave: evitar FAILURE
+          catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
+            powershell '''
+              if (Test-Path "cypress/report/json") {
+                $jsons = Get-ChildItem "cypress/report/json" -Filter *.json
+                if ($jsons.Count -gt 0) {
+
+                  # Merge de JSONs
+                  npx mochawesome-merge "cypress/report/json/*.json" > "cypress/report/mochawesome.json"
+
+                  # Generar HTML solo si existe el JSON mergeado
+                  if (Test-Path "cypress/report/mochawesome.json") {
+                    npx marge "cypress/report/mochawesome.json" --reportDir "cypress/mochawesome-html" --reportFilename "index"
+                  }
+                }
               }
-            }
-          '''
+            '''
+          }
+
         }
       }
     }
