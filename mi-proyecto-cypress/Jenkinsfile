@@ -27,7 +27,6 @@ pipeline {
             Remove-Item -Recurse -Force "videos_backup" -ErrorAction SilentlyContinue
             Remove-Item -Recurse -Force "screenshots_backup" -ErrorAction SilentlyContinue
 
-            # Crear carpeta JSON antes de Cypress
             New-Item -ItemType Directory -Force -Path "cypress/report/json" | Out-Null
           '''
         }
@@ -66,26 +65,19 @@ pipeline {
       steps {
         dir('mi-proyecto-cypress') {
 
-          # 🔥 Esta es la modificación clave
           catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
             powershell '''
               if (Test-Path "cypress/report/json") {
                 $jsons = Get-ChildItem "cypress/report/json" -Filter *.json
                 if ($jsons.Count -gt 0) {
 
-                  # Merge de JSONs
                   npx mochawesome-merge "cypress/report/json/*.json" > "cypress/report/mochawesome.json"
 
-                  # Generar HTML solo si existe el JSON mergeado
                   if (Test-Path "cypress/report/mochawesome.json") {
 
-                    # Borrar HTML anterior para evitar rutas por defecto
                     Remove-Item -Recurse -Force "cypress/mochawesome-html" -ErrorAction SilentlyContinue
-
-                    # Crear carpeta antes de ejecutar marge
                     New-Item -ItemType Directory -Force -Path "cypress/mochawesome-html" | Out-Null
 
-                    # Generar HTML en la ruta correcta
                     npx marge "cypress/report/mochawesome.json" --reportDir "cypress/mochawesome-html" --reportFilename "index"
                   }
                 }
