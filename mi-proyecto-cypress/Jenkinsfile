@@ -64,6 +64,34 @@ pipeline {
       }
     }
 
+    stage('Backup de videos y screenshots') {
+      steps {
+        dir('mi-proyecto-cypress') {
+          powershell '''
+            Write-Host "=== Creando carpetas de backup si no existen ==="
+
+            if (!(Test-Path "videos_backup")) {
+              New-Item -ItemType Directory -Path "videos_backup" | Out-Null
+            }
+
+            if (!(Test-Path "screenshots_backup")) {
+              New-Item -ItemType Directory -Path "screenshots_backup" | Out-Null
+            }
+
+            Write-Host "=== Moviendo videos ==="
+            Get-ChildItem -Recurse "cypress/videos" -Include *.mp4 -ErrorAction SilentlyContinue | 
+              Move-Item -Destination "videos_backup" -Force -ErrorAction SilentlyContinue
+
+            Write-Host "=== Moviendo screenshots ==="
+            Get-ChildItem -Recurse "cypress/screenshots" -Include *.png -ErrorAction SilentlyContinue | 
+              Move-Item -Destination "screenshots_backup" -Force -ErrorAction SilentlyContinue
+
+            Write-Host "=== Backup completado ==="
+          '''
+        }
+      }
+    }
+
     stage('Diagnóstico de artefactos') {
       steps {
         dir('mi-proyecto-cypress') {
@@ -107,7 +135,6 @@ pipeline {
     always {
       echo '=== Archivando artefactos ==='
 
-      // Archivar artefactos sin duplicarlos
       archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/**', allowEmptyArchive: true
       archiveArtifacts artifacts: 'mi-proyecto-cypress/videos_backup/**', allowEmptyArchive: true
       archiveArtifacts artifacts: 'mi-proyecto-cypress/screenshots_backup/**', allowEmptyArchive: true
@@ -119,10 +146,8 @@ pipeline {
         Get-ChildItem -Recurse "mi-proyecto-cypress/cypress/results/*.xml" -ErrorAction SilentlyContinue
       '''
 
-      // JUnit decide el estado del build
       junit testResults: 'mi-proyecto-cypress/cypress/results/*.xml', allowEmptyResults: true, keepLongStdio: true
 
-      // Publicar Allure
       allure includeProperties: false, jdk: '', results: [[path: 'mi-proyecto-cypress/allure-results']]
     }
   }
