@@ -88,17 +88,23 @@ pipeline {
             powershell '''
               Write-Host "=== Generando reporte Mochawesome ==="
 
-              if (Test-Path "cypress/report/.jsons") {
-                Write-Host "JSONs encontrados. Generando HTML..."
+              # AHORA buscamos los JSONs reales
+              if (Test-Path "cypress/report") {
+                $jsons = Get-ChildItem "cypress/report" -Filter *.json
+                if ($jsons.Count -gt 0) {
+                  Write-Host "JSONs encontrados. Generando HTML..."
 
-                npx mochawesome-merge "cypress/report/.jsons/*.json" > "cypress/report/mochawesome.json"
+                  npx mochawesome-merge "cypress/report/*.json" > "cypress/report/mochawesome.json"
 
-                # Generamos el HTML fuera de cypress/report
-                npx marge "cypress/report/mochawesome.json" --reportDir "cypress/mochawesome-html" --reportFilename "index"
+                  # Generamos el HTML fuera de cypress/report
+                  npx marge "cypress/report/mochawesome.json" --reportDir "cypress/mochawesome-html" --reportFilename "index"
 
-                Write-Host "Reporte Mochawesome generado correctamente en cypress/mochawesome-html/index.html"
+                  Write-Host "Reporte Mochawesome generado correctamente en cypress/mochawesome-html/index.html"
+                } else {
+                  Write-Host "No hay JSONs de Mochawesome. No se generará HTML."
+                }
               } else {
-                Write-Host "No hay JSONs de Mochawesome. No se generará HTML."
+                Write-Host "No existe la carpeta cypress/report."
               }
             '''
           }
