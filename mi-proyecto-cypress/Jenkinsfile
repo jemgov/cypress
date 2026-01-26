@@ -63,10 +63,10 @@ pipeline {
       steps {
         dir('mi-proyecto-cypress') {
           powershell '''
-            if (Test-Path "cypress/report/.jsons") {
-              $jsons = Get-ChildItem "cypress/report/.jsons" -Filter *.json
+            if (Test-Path "cypress/report/json") {
+              $jsons = Get-ChildItem "cypress/report/json" -Filter *.json
               if ($jsons.Count -gt 0) {
-                npx mochawesome-merge "cypress/report/.jsons/*.json" > "cypress/report/mochawesome.json"
+                npx mochawesome-merge "cypress/report/json/*.json" > "cypress/report/mochawesome.json"
                 npx marge "cypress/report/mochawesome.json" --reportDir "cypress/mochawesome-html" --reportFilename "index"
               }
             }
