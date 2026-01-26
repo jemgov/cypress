@@ -27,7 +27,7 @@ pipeline {
             Remove-Item -Recurse -Force "videos_backup" -ErrorAction SilentlyContinue
             Remove-Item -Recurse -Force "screenshots_backup" -ErrorAction SilentlyContinue
 
-            New-Item -ItemType Directory -Force -Path "cypress/report/jsons" | Out-Null
+            New-Item -ItemType Directory -Force -Path "cypress/report/.jsons" | Out-Null
           '''
         }
       }
@@ -66,17 +66,17 @@ pipeline {
         dir('mi-proyecto-cypress') {
           catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
             powershell '''
-              if (Test-Path "cypress/report/jsons") {
-                $jsons = Get-ChildItem "cypress/report/jsons" -Filter *.json
+              if (Test-Path "cypress/report/.jsons") {
+                $jsons = Get-ChildItem "cypress/report/.jsons" -Filter *.json
                 if ($jsons.Count -gt 0) {
 
-                  npx mochawesome-merge "cypress/report/jsons/*.json" > "cypress/report/jsons/mochawesome.json"
+                  npx mochawesome-merge "cypress/report/.jsons/*.json" > "cypress/report/.jsons/mochawesome.json"
 
-                  if (Test-Path "cypress/report/jsons/mochawesome.json") {
+                  if (Test-Path "cypress/report/.jsons/mochawesome.json") {
                     Remove-Item -Recurse -Force "cypress/mochawesome-html" -ErrorAction SilentlyContinue
                     New-Item -ItemType Directory -Force -Path "cypress/mochawesome-html" | Out-Null
 
-                    npx marge "cypress/report/jsons/mochawesome.json" --reportDir "cypress/mochawesome-html" --reportFilename "index"
+                    npx marge "cypress/report/.jsons/mochawesome.json" --reportDir "cypress/mochawesome-html" --reportFilename "index"
                   }
                 }
               }
