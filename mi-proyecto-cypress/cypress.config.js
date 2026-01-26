@@ -3,6 +3,18 @@ const fs = require("fs");
 const path = require("path");
 const allureWriter = require("@shelex/cypress-allure-plugin/writer");
 
+// ============================================================
+// ESCAPAR XML PARA JUNIT (evita errores en Jenkins)
+// ============================================================
+function escapeXml(unsafe) {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
 module.exports = defineConfig({
 
   // ============================================================
@@ -12,12 +24,12 @@ module.exports = defineConfig({
   reporterOptions: {
     reportDir: "cypress/report",
     charts: true,
-    saveJson: true,          // Genera solo JSON
-    html: false,             // NO generar HTML (lo hace Jenkins)
-    embeddedScreenshots: false,
-    inlineAssets: false,
-    saveScreenshots: false,  // Evita duplicados en cypress/report/screenshots
-    saveVideos: false        // Evita duplicados en cypress/report/videos
+    saveJson: true,
+    html: false,                 // NO generar HTML (lo hace Jenkins)
+    embeddedScreenshots: false,  // evita duplicados
+    inlineAssets: false,         // evita carpeta assets
+    saveScreenshots: false,      // evita duplicados en report/screenshots
+    saveVideos: false            // evita duplicados en report/videos
   },
 
   // ============================================================
@@ -59,7 +71,7 @@ module.exports = defineConfig({
       console.log("📊 Mochawesome plugin cargado");
 
       // ============================================================
-      // GENERAR JUNIT PARA JENKINS
+      // GENERAR JUNIT PARA JENKINS (XML limpio y válido)
       // ============================================================
       on("after:spec", (spec, results) => {
 
@@ -94,22 +106,23 @@ module.exports = defineConfig({
         const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
   <testsuite name="${specName}" tests="${results.tests.length}" failures="${failures}" errors="0" skipped="0">
-    ${results.tests
-      .map(t => {
-        const name = t.title.join(" ");
-        const classname = safeName;
+${results.tests
+    .map(t => {
+      const name = escapeXml(t.title.join(" "));
+      const classname = safeName;
 
-        if (t.state === "failed") {
-          return `<testcase classname="${classname}" name="${name}">
-      <failure message="Test failed" type="AssertionError">
-        ${t.displayError || "Test failed"}
-      </failure>
-    </testcase>`;
-        } else {
-          return `<testcase classname="${classname}" name="${name}" />`;
-        }
-      })
-      .join("\n")}
+      if (t.state === "failed") {
+        const error = escapeXml(t.displayError || "Test failed");
+        return `<testcase classname="${classname}" name="${name}">
+  <failure message="Test failed" type="AssertionError">
+    ${error}
+  </failure>
+</testcase>`;
+      } else {
+        return `<testcase classname="${classname}" name="${name}" />`;
+      }
+    })
+    .join("\n")}
   </testsuite>
 </testsuites>`;
 
@@ -118,8 +131,7 @@ module.exports = defineConfig({
 
       // ============================================================
       // IMPORTANTE:
-      // SE ELIMINA COMPLETAMENTE EL BLOQUE after:run
-      // PARA EVITAR MERGES INTERNOS Y DUPLICADOS
+      // NO HAY after:run → evita duplicados y JSON corruptos
       // ============================================================
 
       return config;
