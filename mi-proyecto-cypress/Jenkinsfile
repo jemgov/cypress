@@ -33,16 +33,18 @@ pipeline {
       steps {
         timeout(time: 15, unit: 'MINUTES') {
           dir('mi-proyecto-cypress') {
-            powershell '''
-              Write-Host "=== Ejecutando pruebas Cypress ==="
-              npx cypress run --spec "$env:TEST_SPEC"
+            // Nunca falla el stage aunque Cypress devuelva código distinto de 0
+            catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+              powershell '''
+                Write-Host "=== Ejecutando pruebas Cypress ==="
+                npx cypress run --spec "$env:TEST_SPEC"
 
-              $code = $LASTEXITCODE
-              Write-Host "Cypress terminó con código: $code"
+                $code = $LASTEXITCODE
+                Write-Host "Cypress terminó con código: $code"
 
-              # No fallar el pipeline aunque Cypress falle
-              exit 0
-            '''
+                exit 0
+              '''
+            }
           }
         }
       }
@@ -51,20 +53,25 @@ pipeline {
     stage('Generar reporte Mochawesome') {
       steps {
         dir('mi-proyecto-cypress') {
-          powershell '''
-            Write-Host "=== Generando reporte Mochawesome ==="
+          // Si algo peta aquí, marcamos la stage como FAILURE pero el build como UNSTABLE
+          catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+            powershell '''
+              Write-Host "=== Generando reporte Mochawesome ==="
 
-            if (Test-Path "cypress/report/.jsons") {
-              Write-Host "JSONs encontrados. Generando HTML..."
+              if (Test-Path "cypress/report/.jsons") {
+                Write-Host "JSONs encontrados. Generando HTML..."
 
-              npx mochawesome-merge "cypress/report/.jsons/*.json" > "cypress/report/mochawesome.json"
-              npx marge "cypress/report/mochawesome.json" --reportDir "cypress/report"
+                npx mochawesome-merge "cypress/report/.jsons/*.json" > "cypress/report/mochawesome.json"
 
-              Write-Host "Reporte Mochawesome generado correctamente."
-            } else {
-              Write-Host "No hay JSONs de Mochawesome. No se generará HTML."
-            }
-          '''
+                # OJO: forzamos nombre index.html
+                npx marge "cypress/report/mochawesome.json" --reportDir "cypress/report" --reportFilename "index"
+
+                Write-Host "Reporte Mochawesome generado correctamente en cypress/report/index.html"
+              } else {
+                Write-Host "No hay JSONs de Mochawesome. No se generará HTML."
+              }
+            '''
+          }
         }
       }
     }
@@ -72,16 +79,18 @@ pipeline {
     stage('Preparar historial Allure') {
       steps {
         dir('mi-proyecto-cypress') {
-          powershell '''
-            Write-Host "=== Copiando historial de Allure (si existe) ==="
+          catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+            powershell '''
+              Write-Host "=== Copiando historial de Allure (si existe) ==="
 
-            if (Test-Path "allure-report/history") {
-              Write-Host "Historial encontrado. Copiando..."
-              Copy-Item -Recurse -Force "allure-report/history" "allure-results/history"
-            } else {
-              Write-Host "No existe historial previo."
-            }
-          '''
+              if (Test-Path "allure-report/history") {
+                Write-Host "Historial encontrado. Copiando..."
+                Copy-Item -Recurse -Force "allure-report/history" "allure-results/history"
+              } else {
+                Write-Host "No existe historial previo."
+              }
+            '''
+          }
         }
       }
     }
@@ -89,24 +98,26 @@ pipeline {
     stage('Diagnóstico de artefactos') {
       steps {
         dir('mi-proyecto-cypress') {
-          powershell '''
-            Write-Host "=== Diagnóstico de artefactos ==="
+          catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+            powershell '''
+              Write-Host "=== Diagnóstico de artefactos ==="
 
-            Write-Host "--- Videos Backup ---"
-            Get-ChildItem -Recurse videos_backup -ErrorAction SilentlyContinue
+              Write-Host "--- Videos Backup ---"
+              Get-ChildItem -Recurse videos_backup -ErrorAction SilentlyContinue
 
-            Write-Host "--- Screenshots Backup ---"
-            Get-ChildItem -Recurse screenshots_backup -ErrorAction SilentlyContinue
+              Write-Host "--- Screenshots Backup ---"
+              Get-ChildItem -Recurse screenshots_backup -ErrorAction SilentlyContinue
 
-            Write-Host "--- Mochawesome Report ---"
-            Get-ChildItem -Recurse cypress/report -ErrorAction SilentlyContinue
+              Write-Host "--- Mochawesome Report ---"
+              Get-ChildItem -Recurse cypress/report -ErrorAction SilentlyContinue
 
-            Write-Host "--- Allure Results ---"
-            Get-ChildItem -Recurse allure-results -ErrorAction SilentlyContinue
+              Write-Host "--- Allure Results ---"
+              Get-ChildItem -Recurse allure-results -ErrorAction SilentlyContinue
 
-            Write-Host "--- Allure Report (HTML) ---"
-            Get-ChildItem -Recurse allure-report -ErrorAction SilentlyContinue
-          '''
+              Write-Host "--- Allure Report (HTML) ---"
+              Get-ChildItem -Recurse allure-report -ErrorAction SilentlyContinue
+            '''
+          }
         }
       }
     }
@@ -115,7 +126,7 @@ pipeline {
       steps {
         publishHTML(target: [
           reportDir: 'mi-proyecto-cypress/cypress/report',
-          reportFiles: 'index.html',
+          reportFiles: 'index.html',          // ahora sí existe
           reportName: 'Reporte Mochawesome',
           keepAll: true,
           alwaysLinkToLastBuild: true,
@@ -140,9 +151,12 @@ pipeline {
         Get-ChildItem -Recurse "mi-proyecto-cypress/cypress/results/*.xml" -ErrorAction SilentlyContinue
       '''
 
-      junit testResults: 'mi-proyecto-cypress/cypress/results/*.xml', allowEmptyResults: true, keepLongStdio: true
+      // Si JUnit ve tests fallados, que marque UNSTABLE, no FAILURE
+      catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
+        junit testResults: 'mi-proyecto-cypress/cypress/results/*.xml', allowEmptyResults: true, keepLongStdio: true
+      }
 
-      // 🔥 Fuerza el estado final a UNSTABLE SIEMPRE
+      // Forzamos resultado final a UNSTABLE siempre
       script {
         currentBuild.result = 'UNSTABLE'
       }
