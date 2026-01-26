@@ -22,6 +22,10 @@ pipeline {
             powershell '''
               Write-Host "=== Instalando dependencias ==="
               npm ci
+
+              Write-Host "=== Instalando reporter JUnit seguro ==="
+              npm install --save-dev cypress-junit-reporter
+
               Write-Host "=== Dependencias instaladas ==="
             '''
           }
@@ -35,7 +39,9 @@ pipeline {
           dir('mi-proyecto-cypress') {
             powershell '''
               Write-Host "=== Ejecutando pruebas Cypress ==="
-              npx cypress run --spec "$env:TEST_SPEC"
+
+              # Ejecutar Cypress con reporter seguro
+              npx cypress run --spec "$env:TEST_SPEC" --reporter cypress-junit-reporter --reporter-options "mochaFile=cypress/results/results-[hash].xml"
 
               $code = $LASTEXITCODE
               Write-Host "Cypress terminó con código: $code"
@@ -43,6 +49,40 @@ pipeline {
               exit 0
             '''
           }
+        }
+      }
+    }
+
+    stage('Validar XMLs JUnit') {
+      steps {
+        dir('mi-proyecto-cypress') {
+          powershell '''
+            Write-Host "=== Validando XMLs generados ==="
+
+            $xmlFiles = Get-ChildItem "cypress/results" -Include *.xml -ErrorAction SilentlyContinue
+
+            foreach ($file in $xmlFiles) {
+              try {
+                [xml]$doc = Get-Content $file.FullName
+                Write-Host "✔ XML válido: $($file.Name)"
+              } catch {
+                Write-Host "❌ XML inválido: $($file.Name)"
+                Write-Host "Intentando limpiar caracteres ilegales..."
+
+                # Limpieza básica de caracteres no válidos
+                $content = Get-Content $file.FullName -Raw
+                $clean = $content -replace '[^\x09\x0A\x0D\x20-\x7F]', ''
+                $clean | Set-Content $file.FullName
+
+                try {
+                  [xml]$doc2 = Get-Content $file.FullName
+                  Write-Host "✔ XML reparado correctamente"
+                } catch {
+                  Write-Host "❌ No se pudo reparar el XML"
+                }
+              }
+            }
+          '''
         }
       }
     }
