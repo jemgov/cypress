@@ -22,6 +22,7 @@ pipeline {
             Write-Host "=== Limpiando carpetas previas ==="
 
             Remove-Item -Recurse -Force "cypress/report" -ErrorAction SilentlyContinue
+            Remove-Item -Recurse -Force "cypress/mochawesome-html" -ErrorAction SilentlyContinue
             Remove-Item -Recurse -Force "cypress/screenshots" -ErrorAction SilentlyContinue
             Remove-Item -Recurse -Force "cypress/videos" -ErrorAction SilentlyContinue
             Remove-Item -Recurse -Force "cypress/results" -ErrorAction SilentlyContinue
@@ -80,9 +81,10 @@ pipeline {
 
                 npx mochawesome-merge "cypress/report/.jsons/*.json" > "cypress/report/mochawesome.json"
 
-                npx marge "cypress/report/mochawesome.json" --reportDir "cypress/report" --reportFilename "index"
+                # Generamos el HTML fuera de cypress/report
+                npx marge "cypress/report/mochawesome.json" --reportDir "cypress/mochawesome-html" --reportFilename "index"
 
-                Write-Host "Reporte Mochawesome generado correctamente en cypress/report/index.html"
+                Write-Host "Reporte Mochawesome generado correctamente en cypress/mochawesome-html/index.html"
               } else {
                 Write-Host "No hay JSONs de Mochawesome. No se generará HTML."
               }
@@ -124,8 +126,11 @@ pipeline {
               Write-Host "--- Screenshots Backup ---"
               Get-ChildItem -Recurse screenshots_backup -ErrorAction SilentlyContinue
 
-              Write-Host "--- Mochawesome Report ---"
+              Write-Host "--- Mochawesome Report (JSON) ---"
               Get-ChildItem -Recurse cypress/report -ErrorAction SilentlyContinue
+
+              Write-Host "--- Mochawesome HTML ---"
+              Get-ChildItem -Recurse cypress/mochawesome-html -ErrorAction SilentlyContinue
 
               Write-Host "--- Allure Results ---"
               Get-ChildItem -Recurse allure-results -ErrorAction SilentlyContinue
@@ -141,7 +146,7 @@ pipeline {
     stage('Publicar Mochawesome') {
       steps {
         publishHTML(target: [
-          reportDir: 'mi-proyecto-cypress/cypress/report',
+          reportDir: 'mi-proyecto-cypress/cypress/mochawesome-html',
           reportFiles: 'index.html',
           reportName: 'Reporte Mochawesome',
           keepAll: true,
@@ -157,6 +162,7 @@ pipeline {
       echo '=== Archivando artefactos ==='
 
       archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/**', allowEmptyArchive: true
+      archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/mochawesome-html/**', allowEmptyArchive: true
       archiveArtifacts artifacts: 'mi-proyecto-cypress/videos_backup/**', allowEmptyArchive: true
       archiveArtifacts artifacts: 'mi-proyecto-cypress/screenshots_backup/**', allowEmptyArchive: true
       archiveArtifacts artifacts: 'mi-proyecto-cypress/allure-results/**', allowEmptyArchive: true
