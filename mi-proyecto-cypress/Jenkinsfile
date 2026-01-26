@@ -64,33 +64,39 @@ pipeline {
       }
     }
 
-    stage('Backup de videos y screenshots') {
+    stage('Backup de videos y screenshots por fecha') {
       steps {
         dir('mi-proyecto-cypress') {
           powershell '''
-            Write-Host "=== Creando carpetas de backup si no existen ==="
+            Write-Host "=== Preparando backup por fecha ==="
 
-            if (!(Test-Path "videos_backup")) {
-              New-Item -ItemType Directory -Path "videos_backup" | Out-Null
-            }
+            # Fecha YYYY-MM-DD
+            $dateFolder = (Get-Date -Format "yyyy-MM-dd")
 
-            if (!(Test-Path "screenshots_backup")) {
-              New-Item -ItemType Directory -Path "screenshots_backup" | Out-Null
-            }
+            # Crear carpetas raíz si no existen
+            if (!(Test-Path "videos_backup")) { New-Item -ItemType Directory -Path "videos_backup" | Out-Null }
+            if (!(Test-Path "screenshots_backup")) { New-Item -ItemType Directory -Path "screenshots_backup" | Out-Null }
 
-            Write-Host "=== Copiando videos (sin borrar los originales) ==="
+            # Crear carpetas por fecha
+            $videosDatePath = Join-Path "videos_backup" $dateFolder
+            $screensDatePath = Join-Path "screenshots_backup" $dateFolder
+
+            if (!(Test-Path $videosDatePath)) { New-Item -ItemType Directory -Path $videosDatePath | Out-Null }
+            if (!(Test-Path $screensDatePath)) { New-Item -ItemType Directory -Path $screensDatePath | Out-Null }
+
+            Write-Host "=== Copiando videos ==="
             Get-ChildItem -Recurse "cypress/videos" -Include *.mp4 -ErrorAction SilentlyContinue | ForEach-Object {
-              $dest = Join-Path "videos_backup" $_.Name
+              $dest = Join-Path $videosDatePath $_.Name
               Copy-Item $_.FullName -Destination $dest -Force -ErrorAction SilentlyContinue
             }
 
-            Write-Host "=== Copiando screenshots (sin borrar los originales) ==="
+            Write-Host "=== Copiando screenshots ==="
             Get-ChildItem -Recurse "cypress/screenshots" -Include *.png -ErrorAction SilentlyContinue | ForEach-Object {
-              $dest = Join-Path "screenshots_backup" $_.Name
+              $dest = Join-Path $screensDatePath $_.Name
               Copy-Item $_.FullName -Destination $dest -Force -ErrorAction SilentlyContinue
             }
 
-            Write-Host "=== Backup completado (solo copiado, sin mover) ==="
+            Write-Host "=== Backup por fecha completado ==="
           '''
         }
       }
