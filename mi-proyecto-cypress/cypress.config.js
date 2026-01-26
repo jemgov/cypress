@@ -1,39 +1,23 @@
 const { defineConfig } = require("cypress");
 const fs = require("fs");
 const path = require("path");
+const { execSync } = require("child_process");
 const allureWriter = require("@shelex/cypress-allure-plugin/writer");
-
-// ============================================================
-// Función para escapar XML (JUnit)
-// ============================================================
-function escapeXml(unsafe) {
-  return unsafe
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
 
 module.exports = defineConfig({
 
   // ============================================================
-  // REPORTER PRINCIPAL: Mochawesome SOLO JSON
+  // REPORTER PRINCIPAL: MOCHAWESOME
   // ============================================================
   reporter: "cypress-mochawesome-reporter",
   reporterOptions: {
-    reportDir: "cypress/report/json",   // Carpeta estable
-    saveJson: true,
-    html: false,                 // NO generar HTML
-    charts: false,
-    embeddedScreenshots: false,
-    inlineAssets: false,
-    saveScreenshots: false,
-    saveVideos: false
+    reportDir: "cypress/report",
+    charts: true,
+    saveJson: true
   },
 
   // ============================================================
-  // CONFIGURACIÓN DE VIDEOS Y SCREENSHOTS
+  // VIDEOS Y SCREENSHOTS
   // ============================================================
   video: true,
   videosFolder: "cypress/videos",
@@ -41,11 +25,11 @@ module.exports = defineConfig({
   screenshotsFolder: "cypress/screenshots",
 
   // ============================================================
-  // ENV
+  // ENV (incluye timezone para Allure)
   // ============================================================
   env: {
     allure: true,
-    allureTimezone: "local"
+    allureTimezone: "local"   // ← CORRECCIÓN: fuerza a Allure a usar hora local
   },
 
   retries: {
@@ -59,17 +43,19 @@ module.exports = defineConfig({
     setupNodeEvents(on, config) {
 
       // ============================================================
-      // ACTIVAR ALLURE
+      // ACTIVAR ALLURE con timezone local
       // ============================================================
       allureWriter(on, { ...config, timezone: "local" });
+      console.log("🔥 Allure plugin cargado con timezone local");
 
       // ============================================================
-      // REGISTRO OFICIAL DE MOCHAWESOME (solo JSON)
+      // ACTIVAR MOCHAWESOME
       // ============================================================
       require("cypress-mochawesome-reporter/plugin")(on);
+      console.log("📊 Mochawesome plugin cargado");
 
       // ============================================================
-      // GENERAR XML JUNIT PARA JENKINS
+      // GENERAR JUNIT PARA JENKINS
       // ============================================================
       on("after:spec", (spec, results) => {
 
@@ -104,27 +90,106 @@ module.exports = defineConfig({
         const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <testsuites>
   <testsuite name="${specName}" tests="${results.tests.length}" failures="${failures}" errors="0" skipped="0">
-${results.tests
-    .map(t => {
-      const name = escapeXml(t.title.join(" "));
-      const classname = safeName;
+    ${results.tests
+      .map(t => {
+        const name = t.title.join(" ");
+        const classname = safeName;
 
-      if (t.state === "failed") {
-        const error = escapeXml(t.displayError || "Test failed");
-        return `<testcase classname="${classname}" name="${name}">
-  <failure message="Test failed" type="AssertionError">
-    ${error}
-  </failure>
-</testcase>`;
-      } else {
-        return `<testcase classname="${classname}" name="${name}" />`;
-      }
-    })
-    .join("\n")}
+        if (t.state === "failed") {
+          return `<testcase classname="${classname}" name="${name}">
+      <failure message="Test failed" type="AssertionError">
+        ${t.displayError || "Test failed"}
+      </failure>
+    </testcase>`;
+        } else {
+          return `<testcase classname="${classname}" name="${name}" />`;
+        }
+      })
+      .join("\n")}
   </testsuite>
 </testsuites>`;
 
         fs.writeFileSync(junitFile, xml);
+      });
+
+      // ============================================================
+      // AFTER:RUN → MERGE MOCHAWESOME + GENERAR HTML + BACKUPS
+      // ============================================================
+      on("after:run", () => {
+
+        const reportDir = path.join(__dirname, "cypress/report");
+        const jsonsDir = path.join(reportDir, ".jsons");
+
+        if (!fs.existsSync(jsonsDir)) {
+          fs.mkdirSync(jsonsDir, { recursive: true });
+        }
+
+        // Mover JSONs generados por mochawesome
+        const jsonFiles = fs
+          .readdirSync(reportDir)
+          .filter(f => f.endsWith(".json") && f !== "mochawesome.json");
+
+        jsonFiles.forEach(file => {
+          fs.renameSync(
+            path.join(reportDir, file),
+            path.join(jsonsDir, file)
+          );
+        });
+
+        // MERGE + HTML
+        try {
+          execSync(
+            `npx mochawesome-merge ${jsonsDir}/*.json > ${reportDir}/mochawesome.json`,
+            { stdio: "inherit" }
+          );
+
+          execSync(
+            `npx marge ${reportDir}/mochawesome.json --reportDir ${reportDir} --inline --reportFilename index.html`,
+            { stdio: "inherit" }
+          );
+        } catch (err) {
+          console.error("Error generando mochawesome:", err);
+        }
+
+        // ============================================================
+        // BACKUP DE VIDEOS
+        // ============================================================
+        const videosDir = path.join(__dirname, "cypress/videos");
+        const backupRoot = path.join(__dirname, "videos_backup");
+
+        if (!fs.existsSync(backupRoot)) {
+          fs.mkdirSync(backupRoot, { recursive: true });
+        }
+
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, "0");
+        const dd = String(today.getDate()).padStart(2, "0");
+        const dateFolder = `${yyyy}-${mm}-${dd}`;
+
+        const backupDateDir = path.join(backupRoot, dateFolder);
+        if (!fs.existsSync(backupDateDir)) {
+          fs.mkdirSync(backupDateDir, { recursive: true });
+        }
+
+        if (fs.existsSync(videosDir)) {
+          fs.readdirSync(videosDir).forEach(file => {
+            if (file.endsWith(".mp4")) {
+
+              const specName = file.replace(".mp4", "");
+              const specDir = path.join(backupDateDir, specName);
+
+              if (!fs.existsSync(specDir)) {
+                fs.mkdirSync(specDir, { recursive: true });
+              }
+
+              const src = path.join(videosDir, file);
+              const dest = path.join(specDir, file);
+
+              fs.copyFileSync(src, dest);
+            }
+          });
+        }
       });
 
       return config;
