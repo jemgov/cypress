@@ -12,12 +12,16 @@ module.exports = defineConfig({
   reporterOptions: {
     reportDir: "cypress/report",
     charts: true,
-    saveJson: true,     // ← SOLO JSON, sin HTML
-    html: false         // ← IMPORTANTE: NO generar HTML aquí
+    saveJson: true,          // Genera solo JSON
+    html: false,             // NO generar HTML (lo hace Jenkins)
+    embeddedScreenshots: false,
+    inlineAssets: false,
+    saveScreenshots: false,  // Evita duplicados en cypress/report/screenshots
+    saveVideos: false        // Evita duplicados en cypress/report/videos
   },
 
   // ============================================================
-  // VIDEOS Y SCREENSHOTS
+  // VIDEOS Y SCREENSHOTS (solo los de Cypress)
   // ============================================================
   video: true,
   videosFolder: "cypress/videos",
@@ -115,7 +119,7 @@ module.exports = defineConfig({
       // ============================================================
       // IMPORTANTE:
       // SE ELIMINA COMPLETAMENTE EL BLOQUE after:run
-      // PARA EVITAR MERGES INTERNOS Y JSON CORRUPTOS
+      // PARA EVITAR MERGES INTERNOS Y DUPLICADOS
       // ============================================================
 
       return config;
