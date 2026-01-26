@@ -15,6 +15,25 @@ pipeline {
 
   stages {
 
+    stage('Limpiar workspace') {
+      steps {
+        dir('mi-proyecto-cypress') {
+          powershell '''
+            Write-Host "=== Limpiando carpetas previas ==="
+
+            Remove-Item -Recurse -Force "cypress/report" -ErrorAction SilentlyContinue
+            Remove-Item -Recurse -Force "cypress/screenshots" -ErrorAction SilentlyContinue
+            Remove-Item -Recurse -Force "cypress/videos" -ErrorAction SilentlyContinue
+            Remove-Item -Recurse -Force "cypress/results" -ErrorAction SilentlyContinue
+            Remove-Item -Recurse -Force "videos_backup" -ErrorAction SilentlyContinue
+            Remove-Item -Recurse -Force "screenshots_backup" -ErrorAction SilentlyContinue
+
+            Write-Host "=== Workspace limpio ==="
+          '''
+        }
+      }
+    }
+
     stage('Instalar dependencias') {
       steps {
         timeout(time: 5, unit: 'MINUTES') {
@@ -33,7 +52,6 @@ pipeline {
       steps {
         timeout(time: 15, unit: 'MINUTES') {
           dir('mi-proyecto-cypress') {
-            // Nunca falla el stage aunque Cypress devuelva código distinto de 0
             catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
               powershell '''
                 Write-Host "=== Ejecutando pruebas Cypress ==="
@@ -53,7 +71,6 @@ pipeline {
     stage('Generar reporte Mochawesome') {
       steps {
         dir('mi-proyecto-cypress') {
-          // Si algo peta aquí, marcamos la stage como FAILURE pero el build como UNSTABLE
           catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
             powershell '''
               Write-Host "=== Generando reporte Mochawesome ==="
@@ -63,7 +80,6 @@ pipeline {
 
                 npx mochawesome-merge "cypress/report/.jsons/*.json" > "cypress/report/mochawesome.json"
 
-                # OJO: forzamos nombre index.html
                 npx marge "cypress/report/mochawesome.json" --reportDir "cypress/report" --reportFilename "index"
 
                 Write-Host "Reporte Mochawesome generado correctamente en cypress/report/index.html"
@@ -126,7 +142,7 @@ pipeline {
       steps {
         publishHTML(target: [
           reportDir: 'mi-proyecto-cypress/cypress/report',
-          reportFiles: 'index.html',          // ahora sí existe
+          reportFiles: 'index.html',
           reportName: 'Reporte Mochawesome',
           keepAll: true,
           alwaysLinkToLastBuild: true,
@@ -151,12 +167,10 @@ pipeline {
         Get-ChildItem -Recurse "mi-proyecto-cypress/cypress/results/*.xml" -ErrorAction SilentlyContinue
       '''
 
-      // Si JUnit ve tests fallados, que marque UNSTABLE, no FAILURE
       catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
         junit testResults: 'mi-proyecto-cypress/cypress/results/*.xml', allowEmptyResults: true, keepLongStdio: true
       }
 
-      // Forzamos resultado final a UNSTABLE siempre
       script {
         currentBuild.result = 'UNSTABLE'
       }
