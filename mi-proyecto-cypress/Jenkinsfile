@@ -57,8 +57,8 @@ pipeline {
             if (Test-Path "cypress/report/.jsons") {
               Write-Host "JSONs encontrados. Generando HTML..."
 
-              npx mochawesome-merge cypress/report/.jsons/*.json > cypress/report/mochawesome.json
-              npx marge cypress/report/mochawesome.json --reportDir cypress/report
+              npx mochawesome-merge "cypress/report/.jsons/*.json" > "cypress/report/mochawesome.json"
+              npx marge "cypress/report/mochawesome.json" --reportDir "cypress/report"
 
               Write-Host "Reporte Mochawesome generado correctamente."
             } else {
@@ -141,6 +141,11 @@ pipeline {
       '''
 
       junit testResults: 'mi-proyecto-cypress/cypress/results/*.xml', allowEmptyResults: true, keepLongStdio: true
+
+      // 🔥 Fuerza el estado final a UNSTABLE SIEMPRE
+      script {
+        currentBuild.result = 'UNSTABLE'
+      }
 
       allure includeProperties: false, jdk: '', results: [[path: 'mi-proyecto-cypress/allure-results']]
     }
