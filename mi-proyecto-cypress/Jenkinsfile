@@ -78,15 +78,19 @@ pipeline {
               New-Item -ItemType Directory -Path "screenshots_backup" | Out-Null
             }
 
-            Write-Host "=== Moviendo videos ==="
-            Get-ChildItem -Recurse "cypress/videos" -Include *.mp4 -ErrorAction SilentlyContinue | 
-              Move-Item -Destination "videos_backup" -Force -ErrorAction SilentlyContinue
+            Write-Host "=== Copiando videos (sin borrar los originales) ==="
+            Get-ChildItem -Recurse "cypress/videos" -Include *.mp4 -ErrorAction SilentlyContinue | ForEach-Object {
+              $dest = Join-Path "videos_backup" $_.Name
+              Copy-Item $_.FullName -Destination $dest -Force -ErrorAction SilentlyContinue
+            }
 
-            Write-Host "=== Moviendo screenshots ==="
-            Get-ChildItem -Recurse "cypress/screenshots" -Include *.png -ErrorAction SilentlyContinue | 
-              Move-Item -Destination "screenshots_backup" -Force -ErrorAction SilentlyContinue
+            Write-Host "=== Copiando screenshots (sin borrar los originales) ==="
+            Get-ChildItem -Recurse "cypress/screenshots" -Include *.png -ErrorAction SilentlyContinue | ForEach-Object {
+              $dest = Join-Path "screenshots_backup" $_.Name
+              Copy-Item $_.FullName -Destination $dest -Force -ErrorAction SilentlyContinue
+            }
 
-            Write-Host "=== Backup completado ==="
+            Write-Host "=== Backup completado (solo copiado, sin mover) ==="
           '''
         }
       }
