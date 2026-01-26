@@ -4,7 +4,7 @@ const path = require("path");
 const allureWriter = require("@shelex/cypress-allure-plugin/writer");
 
 // ============================================================
-// ESCAPAR XML PARA JUNIT (evita errores en Jenkins)
+// Función para escapar XML (JUnit)
 // ============================================================
 function escapeXml(unsafe) {
   return unsafe
@@ -18,22 +18,22 @@ function escapeXml(unsafe) {
 module.exports = defineConfig({
 
   // ============================================================
-  // REPORTER PRINCIPAL: MOCHAWESOME (solo JSON)
+  // REPORTER PRINCIPAL: Mochawesome SOLO JSON
   // ============================================================
   reporter: "cypress-mochawesome-reporter",
   reporterOptions: {
     reportDir: "cypress/report",
-    charts: true,
     saveJson: true,
-    html: false,                 // NO generar HTML (lo hace Jenkins)
-    embeddedScreenshots: false,  // evita duplicados
-    inlineAssets: false,         // evita carpeta assets
-    saveScreenshots: false,      // evita duplicados en report/screenshots
-    saveVideos: false            // evita duplicados en report/videos
+    html: false,                 // NO generar HTML
+    charts: false,
+    embeddedScreenshots: false,
+    inlineAssets: false,
+    saveScreenshots: false,
+    saveVideos: false
   },
 
   // ============================================================
-  // VIDEOS Y SCREENSHOTS (solo los de Cypress)
+  // CONFIGURACIÓN DE VIDEOS Y SCREENSHOTS
   // ============================================================
   video: true,
   videosFolder: "cypress/videos",
@@ -41,7 +41,7 @@ module.exports = defineConfig({
   screenshotsFolder: "cypress/screenshots",
 
   // ============================================================
-  // ENV (incluye timezone para Allure)
+  // ENV
   // ============================================================
   env: {
     allure: true,
@@ -62,16 +62,25 @@ module.exports = defineConfig({
       // ACTIVAR ALLURE
       // ============================================================
       allureWriter(on, { ...config, timezone: "local" });
-      console.log("🔥 Allure plugin cargado con timezone local");
 
       // ============================================================
-      // ACTIVAR MOCHAWESOME (solo JSON)
+      // REGISTRO CONTROLADO DE MOCHAWESOME (solo JSON)
       // ============================================================
-      require("cypress-mochawesome-reporter/plugin")(on);
-      console.log("📊 Mochawesome plugin cargado");
+      on("before:run", () => {
+        process.env.MOCHAWESOME_REPORTER_OPTS = JSON.stringify({
+          reportDir: "cypress/report",
+          saveJson: true,
+          html: false,
+          charts: false,
+          embeddedScreenshots: false,
+          inlineAssets: false,
+          saveScreenshots: false,
+          saveVideos: false
+        });
+      });
 
       // ============================================================
-      // GENERAR JUNIT PARA JENKINS (XML limpio y válido)
+      // GENERAR XML JUNIT PARA JENKINS
       // ============================================================
       on("after:spec", (spec, results) => {
 
@@ -128,11 +137,6 @@ ${results.tests
 
         fs.writeFileSync(junitFile, xml);
       });
-
-      // ============================================================
-      // IMPORTANTE:
-      // NO HAY after:run → evita duplicados y JSON corruptos
-      // ============================================================
 
       return config;
     }
