@@ -22,7 +22,7 @@ module.exports = defineConfig({
   // ============================================================
   reporter: "cypress-mochawesome-reporter",
   reporterOptions: {
-    reportDir: "cypress/report",
+    reportDir: "cypress/report/.jsons",   // <-- JSONs en carpeta oculta
     saveJson: true,
     html: false,                 // NO generar HTML
     charts: false,
@@ -64,20 +64,9 @@ module.exports = defineConfig({
       allureWriter(on, { ...config, timezone: "local" });
 
       // ============================================================
-      // REGISTRO CONTROLADO DE MOCHAWESOME (solo JSON)
+      // REGISTRO OFICIAL DE MOCHAWESOME (solo JSON)
       // ============================================================
-      on("before:run", () => {
-        process.env.MOCHAWESOME_REPORTER_OPTS = JSON.stringify({
-          reportDir: "cypress/report",
-          saveJson: true,
-          html: false,
-          charts: false,
-          embeddedScreenshots: false,
-          inlineAssets: false,
-          saveScreenshots: false,
-          saveVideos: false
-        });
-      });
+      require("cypress-mochawesome-reporter/plugin")(on);
 
       // ============================================================
       // GENERAR XML JUNIT PARA JENKINS
