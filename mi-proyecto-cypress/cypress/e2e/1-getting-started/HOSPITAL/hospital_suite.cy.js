@@ -15,7 +15,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   // ======================================================
 
   it('P01 - Validación de pacientes en UCI', () => {
-    cy.allure().owner('QA Team');
+    cy.allure().owner('José Manuel González');
     cy.allure().severity('critical');
     cy.allure().feature('UCI');
 
@@ -23,7 +23,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('P02 - IDs numéricos', () => {
-    cy.allure().owner('Jesús G.');
+    cy.allure().owner('Jesús Gómez');
     cy.allure().severity('normal');
     cy.allure().feature('urgencias');
 
@@ -31,7 +31,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('P03 - Medicamentos críticos existen', () => {
-    cy.allure().owner('QA Team');
+    cy.allure().owner('Marta Rodríguez');
     cy.allure().severity('critical');
     cy.allure().feature('medicación');
 
@@ -39,7 +39,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('P04 - Estructura mínima de paciente', () => {
-    cy.allure().owner('Jesús G.');
+    cy.allure().owner('Jesús Gómez');
     cy.allure().severity('minor');
     cy.allure().feature('urgencias');
 
@@ -49,7 +49,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('P05 - Pacientes en urgencias', () => {
-    cy.allure().owner('QA Team');
+    cy.allure().owner('José Manuel González');
     cy.allure().severity('normal');
     cy.allure().feature('urgencias');
 
@@ -57,7 +57,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('P06 - Medicamentos con ID válido', () => {
-    cy.allure().owner('Jesús G.');
+    cy.allure().owner('Jesús Gómez');
     cy.allure().severity('minor');
     cy.allure().feature('medicación');
 
@@ -65,7 +65,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('P07 - Pacientes pediátricos existen', () => {
-    cy.allure().owner('QA Team');
+    cy.allure().owner('José Manuel González');
     cy.allure().severity('minor');
     cy.allure().feature('urgencias');
 
@@ -73,7 +73,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('P08 - Medicamentos no críticos existen', () => {
-    cy.allure().owner('Jesús G.');
+    cy.allure().owner('José Manuel González');
     cy.allure().severity('normal');
     cy.allure().feature('medicación');
 
@@ -81,7 +81,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('P09 - Pacientes en neurología', () => {
-    cy.allure().owner('QA Team');
+    cy.allure().owner('Alberto Marchena');
     cy.allure().severity('normal');
     cy.allure().feature('UCI');
 
@@ -89,7 +89,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('P10 - Proveedores disponibles', () => {
-    cy.allure().owner('Jesús G.');
+    cy.allure().owner('Jesús Gómez');
     cy.allure().severity('normal');
     cy.allure().feature('medicación');
 
@@ -98,7 +98,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('P11 - IDs únicos de medicamentos', () => {
-    cy.allure().owner('QA Team');
+    cy.allure().owner('Alberto Marchena');
     cy.allure().severity('minor');
     cy.allure().feature('medicación');
 
@@ -107,7 +107,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('P12 - Medicamentos de PharmaPlus', () => {
-    cy.allure().owner('Jesús G.');
+    cy.allure().owner('Jesús Gómez');
     cy.allure().severity('normal');
     cy.allure().feature('medicación');
 
@@ -115,7 +115,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('P13 - Medicamentos de MediHealth', () => {
-    cy.allure().owner('QA Team');
+    cy.allure().owner('José Manuel González');
     cy.allure().severity('normal');
     cy.allure().feature('medicación');
 
@@ -123,7 +123,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('P14 - Medicamentos de Hospicecare', () => {
-    cy.allure().owner('Jesús G.');
+    cy.allure().owner('Carlos Sánchez');
     cy.allure().severity('minor');
     cy.allure().feature('medicación');
 
@@ -131,7 +131,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('P15 - Pacientes con apellidos válidos', () => {
-    cy.allure().owner('QA Team');
+    cy.allure().owner('Marcha Rodríguez');
     cy.allure().severity('minor');
     cy.allure().feature('urgencias');
 
@@ -142,7 +142,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('P16 - Pacientes con letra A en el nombre', () => {
-    cy.allure().owner('Jesús G.');
+    cy.allure().owner('Jesús Gómez');
     cy.allure().severity('minor');
     cy.allure().feature('urgencias');
 
@@ -150,7 +150,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('P17 - Pacientes en más de 5 áreas', () => {
-    cy.allure().owner('QA Team');
+    cy.allure().owner('Carlos Sánchez');
     cy.allure().severity('normal');
     cy.allure().feature('UCI');
 
@@ -159,7 +159,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('P18 - IDs de medicamentos pares', () => {
-    cy.allure().owner('Jesús G.');
+    cy.allure().owner('Alberto Marchena');
     cy.allure().severity('minor');
     cy.allure().feature('medicación');
 
@@ -167,7 +167,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('P19 - IDs de medicamentos impares', () => {
-    cy.allure().owner('QA Team');
+    cy.allure().owner('Alberto Marchena');
     cy.allure().severity('minor');
     cy.allure().feature('medicación');
 
@@ -175,7 +175,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('P20 - Pacientes con ID > 50000', () => {
-    cy.allure().owner('Jesús G.');
+    cy.allure().owner('Marta Rodríguez');
     cy.allure().severity('normal');
     cy.allure().feature('urgencias');
 
@@ -183,7 +183,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('P21 - Medicamentos críticos por proveedor', () => {
-    cy.allure().owner('QA Team');
+    cy.allure().owner('José Manuel González');
     cy.allure().severity('critical');
     cy.allure().feature('medicación');
 
@@ -193,7 +193,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('P22 - Pacientes con nombre que empieza por vocal', () => {
-    cy.allure().owner('Jesús G.');
+    cy.allure().owner('Marta Rodríguez');
     cy.allure().severity('minor');
     cy.allure().feature('urgencias');
 
@@ -201,7 +201,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('P23 - Medicamentos con estructura válida', () => {
-    cy.allure().owner('QA Team');
+    cy.allure().owner('José Manuel González');
     cy.allure().severity('normal');
     cy.allure().feature('medicación');
 
@@ -210,7 +210,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('P24 - Pacientes en oncología', () => {
-    cy.allure().owner('Jesús G.');
+    cy.allure().owner('Jesús Gómez');
     cy.allure().severity('normal');
     cy.allure().feature('urgencias');
 
@@ -218,7 +218,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('P25 - Pacientes en traumatología', () => {
-    cy.allure().owner('QA Team');
+    cy.allure().owner('José Manuel González');
     cy.allure().severity('minor');
     cy.allure().feature('UCI');
 
@@ -226,7 +226,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('P26 - Pacientes en rehabilitación', () => {
-    cy.allure().owner('Jesús G.');
+    cy.allure().owner('Jesús Gómez');
     cy.allure().severity('normal');
     cy.allure().feature('urgencias');
 
@@ -234,7 +234,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('P27 - Medicamentos no críticos por proveedor', () => {
-    cy.allure().owner('QA Team');
+    cy.allure().owner('Alberto Marchena');
     cy.allure().severity('normal');
     cy.allure().feature('medicación');
 
@@ -245,7 +245,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('P28 - Consistencia de fixtures', () => {
-    cy.allure().owner('Jesús G.');
+    cy.allure().owner('Marta Rodríguez');
     cy.allure().severity('normal');
     cy.allure().feature('hospital');
 
@@ -258,7 +258,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   // ======================================================
 
   it('F29 - Paciente inexistente debe existir (fallo esperado)', () => {
-    cy.allure().owner('Jesús G.');
+    cy.allure().owner('Marta Rodríguez');
     cy.allure().severity('critical');
     cy.allure().feature('urgencias');
 
@@ -267,7 +267,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('F30 - Área inexistente debe existir (fallo esperado)', () => {
-    cy.allure().owner('QA Team');
+    cy.allure().owner('Alberto Marchena');
     cy.allure().severity('critical');
     cy.allure().feature('UCI');
 
@@ -276,7 +276,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('F31 - Número incorrecto de pacientes (fallo esperado)', () => {
-    cy.allure().owner('Jesús G.');
+    cy.allure().owner('Jesús Gómez');
     cy.allure().severity('critical');
     cy.allure().feature('hospital');
 
@@ -284,7 +284,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('F32 - Todos los medicamentos deben ser críticos (fallo esperado)', () => {
-    cy.allure().owner('QA Team');
+    cy.allure().owner('José Manuel González');
     cy.allure().severity('critical');
     cy.allure().feature('medicación');
 
@@ -292,7 +292,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('F33 - Solo debe haber un proveedor (fallo esperado)', () => {
-    cy.allure().owner('Jesús G.');
+    cy.allure().owner('José Manuel González');
     cy.allure().severity('critical');
     cy.allure().feature('medicación');
 
@@ -301,7 +301,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('F34 - No debe haber pacientes en urgencias (fallo esperado)', () => {
-    cy.allure().owner('QA Team');
+    cy.allure().owner('José Manuel González');
     cy.allure().severity('critical');
     cy.allure().feature('urgencias');
 
@@ -309,7 +309,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('F35 - No debe haber medicamentos no críticos (fallo esperado)', () => {
-    cy.allure().owner('Jesús G.');
+    cy.allure().owner('Jesús Gómez');
     cy.allure().severity('critical');
     cy.allure().feature('medicación');
 
@@ -321,7 +321,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   // ======================================================
 
   it('S36 - Pendiente de integración con laboratorio', function () {
-    cy.allure().owner('QA Team');
+    cy.allure().owner('Marta Rodríguez');
     cy.allure().severity('minor');
     cy.allure().feature('hospital');
 
@@ -329,7 +329,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('S37 - Pendiente de agenda quirúrgica', function () {
-    cy.allure().owner('Jesús G.');
+    cy.allure().owner('Jesús Gómez');
     cy.allure().severity('minor');
     cy.allure().feature('urgencias');
 
@@ -337,7 +337,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('S38 - Pendiente de reglas de priorización', function () {
-    cy.allure().owner('QA Team');
+    cy.allure().owner('José Manuel González');
     cy.allure().severity('minor');
     cy.allure().feature('UCI');
 
@@ -345,7 +345,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('S39 - Pendiente de informes radiológicos', function () {
-    cy.allure().owner('Jesús G.');
+    cy.allure().owner('Jesús Gómez');
     cy.allure().severity('minor');
     cy.allure().feature('hospital');
 
@@ -357,7 +357,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   // ======================================================
 
   it('B40 - Error inesperado en servicio de camas', () => {
-    cy.allure().owner('Jesús G.');
+    cy.allure().owner('Alberto Marchena');
     cy.allure().severity('blocker');
     cy.allure().feature('UCI');
 
@@ -369,7 +369,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   // ======================================================
 
   it('FL01 - Validación aleatoria de paciente crítico', () => {
-    cy.allure().owner('Jesús G.');
+    cy.allure().owner('José Manuel González');
     cy.allure().severity('minor');
     cy.allure().feature('UCI');
 
@@ -378,7 +378,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('FL02 - Validación aleatoria de proveedor activo', () => {
-    cy.allure().owner('QA Team');
+    cy.allure().owner('José Manuel González');
     cy.allure().severity('normal');
     cy.allure().feature('medicación');
 
@@ -387,7 +387,7 @@ describe('HUDR_2.3 - Suite completa de validaciones hospitalarias', () => {
   });
 
   it('FL03 - Validación aleatoria de nombre de paciente', () => {
-    cy.allure().owner('Jesús G.');
+    cy.allure().owner('Jesús Gómez');
     cy.allure().severity('minor');
     cy.allure().feature('urgencias');
 
