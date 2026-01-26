@@ -61,6 +61,18 @@ pipeline {
                 $code = $LASTEXITCODE
                 Write-Host "Cypress terminó con código: $code"
 
+                Write-Host "=== Creando backups de videos y screenshots ==="
+
+                if (Test-Path "cypress/videos") {
+                  Copy-Item -Recurse -Force "cypress/videos" "videos_backup"
+                }
+
+                if (Test-Path "cypress/screenshots") {
+                  Copy-Item -Recurse -Force "cypress/screenshots" "screenshots_backup"
+                }
+
+                Write-Host "=== Backups creados correctamente ==="
+
                 exit 0
               '''
             }
