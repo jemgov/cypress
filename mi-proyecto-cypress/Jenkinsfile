@@ -26,6 +26,9 @@ pipeline {
             Remove-Item -Recurse -Force "cypress/results" -ErrorAction SilentlyContinue
             Remove-Item -Recurse -Force "videos_backup" -ErrorAction SilentlyContinue
             Remove-Item -Recurse -Force "screenshots_backup" -ErrorAction SilentlyContinue
+
+            # 🔥 FIX DEFINITIVO: crear carpeta JSON antes de Cypress
+            New-Item -ItemType Directory -Force -Path "cypress/report/json" | Out-Null
           '''
         }
       }
