@@ -40,54 +40,17 @@ pipeline {
             powershell '''
               Write-Host "=== Ejecutando pruebas Cypress ==="
 
+              # Mochawesome como siempre
+              # JUnit seguro sin romper XML
               npx cypress run --spec "$env:TEST_SPEC" `
+                --reporter mochawesome `
+                --reporter-options "reportDir=cypress/report,overwrite=false,html=true,json=true" `
                 --reporter cypress-junit-reporter `
                 --reporter-options "mochaFile=cypress/results/results-[hash].xml"
 
-              $code = $LASTEXITCODE
-              Write-Host "Cypress terminó con código: $code"
-
-              exit 0
+              Write-Host "=== Cypress finalizado ==="
             '''
           }
-        }
-      }
-    }
-
-    stage('Validar XMLs JUnit') {
-      steps {
-        dir('mi-proyecto-cypress') {
-          powershell '''
-            Write-Host "=== Validando XMLs generados ==="
-
-            $xmlFiles = Get-ChildItem "cypress/results" -Include *.xml -ErrorAction SilentlyContinue
-
-            foreach ($file in $xmlFiles) {
-              try {
-                [xml]$doc = Get-Content $file.FullName
-                Write-Host "✔ XML válido: $($file.Name)"
-              } catch {
-                Write-Host "❌ XML inválido: $($file.Name)"
-                Write-Host "Intentando limpieza básica..."
-
-                # Limpieza simple: eliminar caracteres no imprimibles
-                $content = Get-Content $file.FullName -Raw
-                $clean = ($content.ToCharArray() | Where-Object {
-                  $code = [int]$_
-                  $code -ge 32 -or $code -eq 10 -or $code -eq 13
-                }) -join ''
-
-                $clean | Set-Content $file.FullName
-
-                try {
-                  [xml]$doc2 = Get-Content $file.FullName
-                  Write-Host "✔ XML reparado correctamente"
-                } catch {
-                  Write-Host "❌ No se pudo reparar el XML"
-                }
-              }
-            }
-          '''
         }
       }
     }
@@ -96,24 +59,18 @@ pipeline {
       steps {
         dir('mi-proyecto-cypress') {
           powershell '''
-            Write-Host "=== Copiando historial de Allure (si existe) ==="
-
             if (Test-Path "allure-report/history") {
               Copy-Item -Recurse -Force "allure-report/history" "allure-results/history"
-            } else {
-              Write-Host "No existe historial previo."
             }
           '''
         }
       }
     }
 
-    stage('Backup de videos y screenshots por fecha (versión A)') {
+    stage('Backup de videos y screenshots por fecha') {
       steps {
         dir('mi-proyecto-cypress') {
           powershell '''
-            Write-Host "=== Preparando backup por fecha ==="
-
             $dateFolder = (Get-Date -Format "yyyy-MM-dd")
 
             if (!(Test-Path "videos_backup")) { New-Item -ItemType Directory -Path "videos_backup" | Out-Null }
@@ -128,18 +85,14 @@ pipeline {
             Write-Host "=== Copiando SOLO videos raíz ==="
             Get-ChildItem "cypress/videos" -File -Include *.mp4 -ErrorAction SilentlyContinue |
               ForEach-Object {
-                $dest = Join-Path $videosDatePath $_.Name
-                Copy-Item $_.FullName -Destination $dest -Force -ErrorAction SilentlyContinue
+                Copy-Item $_.FullName -Destination (Join-Path $videosDatePath $_.Name) -Force
               }
 
-            Write-Host "=== Copiando screenshots (recursivo) ==="
+            Write-Host "=== Copiando screenshots ==="
             Get-ChildItem -Recurse "cypress/screenshots" -Include *.png -ErrorAction SilentlyContinue |
               ForEach-Object {
-                $dest = Join-Path $screensDatePath $_.Name
-                Copy-Item $_.FullName -Destination $dest -Force -ErrorAction SilentlyContinue
+                Copy-Item $_.FullName -Destination (Join-Path $screensDatePath $_.Name) -Force
               }
-
-            Write-Host "=== Backup por fecha completado ==="
           '''
         }
       }
@@ -149,8 +102,6 @@ pipeline {
       steps {
         dir('mi-proyecto-cypress') {
           powershell '''
-            Write-Host "=== Diagnóstico de artefactos ==="
-
             Write-Host "--- Videos Backup ---"
             Get-ChildItem -Recurse videos_backup -ErrorAction SilentlyContinue
 
@@ -159,12 +110,6 @@ pipeline {
 
             Write-Host "--- Mochawesome Report ---"
             Get-ChildItem -Recurse cypress/report -ErrorAction SilentlyContinue
-
-            Write-Host "--- Allure Results ---"
-            Get-ChildItem -Recurse allure-results -ErrorAction SilentlyContinue
-
-            Write-Host "--- Allure Report (HTML) ---"
-            Get-ChildItem -Recurse allure-report -ErrorAction SilentlyContinue
           '''
         }
       }
@@ -186,18 +131,11 @@ pipeline {
 
   post {
     always {
-      echo '=== Archivando artefactos ==='
-
       archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/**', allowEmptyArchive: true
       archiveArtifacts artifacts: 'mi-proyecto-cypress/videos_backup/**', allowEmptyArchive: true
       archiveArtifacts artifacts: 'mi-proyecto-cypress/screenshots_backup/**', allowEmptyArchive: true
       archiveArtifacts artifacts: 'mi-proyecto-cypress/allure-results/**', allowEmptyArchive: true
       archiveArtifacts artifacts: 'mi-proyecto-cypress/allure-report/**', allowEmptyArchive: true
-
-      powershell '''
-        Write-Host "=== XMLs detectados antes de JUnit ==="
-        Get-ChildItem -Recurse "mi-proyecto-cypress/cypress/results/*.xml" -ErrorAction SilentlyContinue
-      '''
 
       junit testResults: 'mi-proyecto-cypress/cypress/results/*.xml', allowEmptyResults: true, keepLongStdio: true
 
