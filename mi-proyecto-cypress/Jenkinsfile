@@ -46,7 +46,7 @@ pipeline {
         dir('mi-proyecto-cypress') {
           catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
             powershell '''
-              npx cypress run --spec "$env:TEST_SPEC"
+              npx cypress run --config-file cypress.config.js --spec "$env:TEST_SPEC"
 
               if (Test-Path "cypress/videos") {
                 Copy-Item -Recurse -Force "cypress/videos" "videos_backup"
