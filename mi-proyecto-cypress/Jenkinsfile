@@ -66,7 +66,7 @@ pipeline {
       steps {
         dir('mi-proyecto-cypress') {
 
-          // 🔥 Esta es la modificación clave: evitar FAILURE
+          # 🔥 Esta es la modificación clave
           catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
             powershell '''
               if (Test-Path "cypress/report/json") {
@@ -78,6 +78,14 @@ pipeline {
 
                   # Generar HTML solo si existe el JSON mergeado
                   if (Test-Path "cypress/report/mochawesome.json") {
+
+                    # Borrar HTML anterior para evitar rutas por defecto
+                    Remove-Item -Recurse -Force "cypress/mochawesome-html" -ErrorAction SilentlyContinue
+
+                    # Crear carpeta antes de ejecutar marge
+                    New-Item -ItemType Directory -Force -Path "cypress/mochawesome-html" | Out-Null
+
+                    # Generar HTML en la ruta correcta
                     npx marge "cypress/report/mochawesome.json" --reportDir "cypress/mochawesome-html" --reportFilename "index"
                   }
                 }
