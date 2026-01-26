@@ -15,76 +15,73 @@ pipeline {
 
   stages {
 
+    stage('Limpiar workspace') {
+      steps {
+        dir('mi-proyecto-cypress') {
+          powershell '''
+            Remove-Item -Recurse -Force "cypress/report" -ErrorAction SilentlyContinue
+            Remove-Item -Recurse -Force "cypress/mochawesome-html" -ErrorAction SilentlyContinue
+            Remove-Item -Recurse -Force "cypress/screenshots" -ErrorAction SilentlyContinue
+            Remove-Item -Recurse -Force "cypress/videos" -ErrorAction SilentlyContinue
+            Remove-Item -Recurse -Force "cypress/results" -ErrorAction SilentlyContinue
+            Remove-Item -Recurse -Force "videos_backup" -ErrorAction SilentlyContinue
+            Remove-Item -Recurse -Force "screenshots_backup" -ErrorAction SilentlyContinue
+
+            New-Item -ItemType Directory -Force -Path "cypress/report/jsons" | Out-Null
+          '''
+        }
+      }
+    }
+
     stage('Instalar dependencias') {
       steps {
-        timeout(time: 5, unit: 'MINUTES') {
-          dir('mi-proyecto-cypress') {
-            powershell '''
-              Write-Host "=== Instalando dependencias ==="
-              npm ci
-              Write-Host "=== Dependencias instaladas ==="
-            '''
-          }
+        dir('mi-proyecto-cypress') {
+          powershell 'npm ci'
         }
       }
     }
 
     stage('Ejecutar pruebas Cypress') {
       steps {
-        timeout(time: 15, unit: 'MINUTES') {
-          dir('mi-proyecto-cypress') {
+        dir('mi-proyecto-cypress') {
+          catchError(buildResult: 'UNSTABLE', stageResult: 'FAILURE') {
             powershell '''
-              Write-Host "=== Ejecutando pruebas Cypress ==="
-              npx cypress run --spec "$env:TEST_SPEC"
+              npx cypress run --config-file cypress.config.js --spec "$env:TEST_SPEC"
 
-              $code = $LASTEXITCODE
-              Write-Host "Cypress terminó con código: $code"
+              if (Test-Path "cypress/videos") {
+                Copy-Item -Recurse -Force "cypress/videos" "videos_backup"
+              }
 
-              exit 0
+              if (Test-Path "cypress/screenshots") {
+                Copy-Item -Recurse -Force "cypress/screenshots" "screenshots_backup"
+              }
             '''
           }
         }
       }
     }
 
-    stage('Preparar historial Allure') {
+    stage('Generar reporte Mochawesome') {
       steps {
         dir('mi-proyecto-cypress') {
-          powershell '''
-            Write-Host "=== Copiando historial de Allure (si existe) ==="
+          catchError(buildResult: 'UNSTABLE', stageResult: 'SUCCESS') {
+            powershell '''
+              if (Test-Path "cypress/report/jsons") {
+                $jsons = Get-ChildItem "cypress/report/jsons" -Filter *.json
+                if ($jsons.Count -gt 0) {
 
-            if (Test-Path "allure-report/history") {
-              Write-Host "Historial encontrado. Copiando..."
-              Copy-Item -Recurse -Force "allure-report/history" "allure-results/history"
-            } else {
-              Write-Host "No existe historial previo."
-            }
-          '''
-        }
-      }
-    }
+                  npx mochawesome-merge "cypress/report/jsons/*.json" > "cypress/report/jsons/mochawesome.json"
 
-    stage('Diagnóstico de artefactos') {
-      steps {
-        dir('mi-proyecto-cypress') {
-          powershell '''
-            Write-Host "=== Diagnóstico de artefactos ==="
+                  if (Test-Path "cypress/report/jsons/mochawesome.json") {
+                    Remove-Item -Recurse -Force "cypress/mochawesome-html" -ErrorAction SilentlyContinue
+                    New-Item -ItemType Directory -Force -Path "cypress/mochawesome-html" | Out-Null
 
-            Write-Host "--- Videos Backup ---"
-            Get-ChildItem -Recurse videos_backup -ErrorAction SilentlyContinue
-
-            Write-Host "--- Screenshots Backup ---"
-            Get-ChildItem -Recurse screenshots_backup -ErrorAction SilentlyContinue
-
-            Write-Host "--- Mochawesome Report ---"
-            Get-ChildItem -Recurse cypress/report -ErrorAction SilentlyContinue
-
-            Write-Host "--- Allure Results ---"
-            Get-ChildItem -Recurse allure-results -ErrorAction SilentlyContinue
-
-            Write-Host "--- Allure Report (HTML) ---"
-            Get-ChildItem -Recurse allure-report -ErrorAction SilentlyContinue
-          '''
+                    npx marge "cypress/report/jsons/mochawesome.json" --reportDir "cypress/mochawesome-html" --reportFilename "index"
+                  }
+                }
+              }
+            '''
+          }
         }
       }
     }
@@ -92,7 +89,7 @@ pipeline {
     stage('Publicar Mochawesome') {
       steps {
         publishHTML(target: [
-          reportDir: 'mi-proyecto-cypress/cypress/report',
+          reportDir: 'mi-proyecto-cypress/cypress/mochawesome-html',
           reportFiles: 'index.html',
           reportName: 'Reporte Mochawesome',
           keepAll: true,
@@ -105,24 +102,19 @@ pipeline {
 
   post {
     always {
-      echo '=== Archivando artefactos ==='
-
-      // Archivar artefactos sin duplicarlos
       archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/report/**', allowEmptyArchive: true
+      archiveArtifacts artifacts: 'mi-proyecto-cypress/cypress/mochawesome-html/**', allowEmptyArchive: true
       archiveArtifacts artifacts: 'mi-proyecto-cypress/videos_backup/**', allowEmptyArchive: true
       archiveArtifacts artifacts: 'mi-proyecto-cypress/screenshots_backup/**', allowEmptyArchive: true
       archiveArtifacts artifacts: 'mi-proyecto-cypress/allure-results/**', allowEmptyArchive: true
       archiveArtifacts artifacts: 'mi-proyecto-cypress/allure-report/**', allowEmptyArchive: true
 
-      powershell '''
-        Write-Host "=== XMLs detectados antes de JUnit ==="
-        Get-ChildItem -Recurse "mi-proyecto-cypress/cypress/results/*.xml" -ErrorAction SilentlyContinue
-      '''
-
-      // JUnit decide el estado del build
       junit testResults: 'mi-proyecto-cypress/cypress/results/*.xml', allowEmptyResults: true, keepLongStdio: true
 
-      // Publicar Allure
+      script {
+        currentBuild.result = 'UNSTABLE'
+      }
+
       allure includeProperties: false, jdk: '', results: [[path: 'mi-proyecto-cypress/allure-results']]
     }
   }
