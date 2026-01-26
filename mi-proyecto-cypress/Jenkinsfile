@@ -64,7 +64,7 @@ pipeline {
       }
     }
 
-    stage('Backup de videos y screenshots por fecha') {
+    stage('Backup de videos y screenshots por fecha (versión A)') {
       steps {
         dir('mi-proyecto-cypress') {
           powershell '''
@@ -84,13 +84,13 @@ pipeline {
             if (!(Test-Path $videosDatePath)) { New-Item -ItemType Directory -Path $videosDatePath | Out-Null }
             if (!(Test-Path $screensDatePath)) { New-Item -ItemType Directory -Path $screensDatePath | Out-Null }
 
-            Write-Host "=== Copiando videos ==="
-            Get-ChildItem -Recurse "cypress/videos" -Include *.mp4 -ErrorAction SilentlyContinue | ForEach-Object {
+            Write-Host "=== Copiando SOLO videos raíz (sin subcarpetas) ==="
+            Get-ChildItem "cypress/videos" -File -Include *.mp4 -ErrorAction SilentlyContinue | ForEach-Object {
               $dest = Join-Path $videosDatePath $_.Name
               Copy-Item $_.FullName -Destination $dest -Force -ErrorAction SilentlyContinue
             }
 
-            Write-Host "=== Copiando screenshots ==="
+            Write-Host "=== Copiando screenshots (todas, recursivo) ==="
             Get-ChildItem -Recurse "cypress/screenshots" -Include *.png -ErrorAction SilentlyContinue | ForEach-Object {
               $dest = Join-Path $screensDatePath $_.Name
               Copy-Item $_.FullName -Destination $dest -Force -ErrorAction SilentlyContinue
