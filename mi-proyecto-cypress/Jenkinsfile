@@ -40,8 +40,9 @@ pipeline {
             powershell '''
               Write-Host "=== Ejecutando pruebas Cypress ==="
 
-              # Ejecutar Cypress con reporter seguro
-              npx cypress run --spec "$env:TEST_SPEC" --reporter cypress-junit-reporter --reporter-options "mochaFile=cypress/results/results-[hash].xml"
+              npx cypress run --spec "$env:TEST_SPEC" `
+                --reporter cypress-junit-reporter `
+                --reporter-options "mochaFile=cypress/results/results-[hash].xml"
 
               $code = $LASTEXITCODE
               Write-Host "Cypress terminó con código: $code"
@@ -67,11 +68,15 @@ pipeline {
                 Write-Host "✔ XML válido: $($file.Name)"
               } catch {
                 Write-Host "❌ XML inválido: $($file.Name)"
-                Write-Host "Intentando limpiar caracteres ilegales..."
+                Write-Host "Intentando limpieza básica..."
 
-                # Limpieza básica de caracteres no válidos
+                # Limpieza simple: eliminar caracteres no imprimibles
                 $content = Get-Content $file.FullName -Raw
-                $clean = $content -replace '[^\x09\x0A\x0D\x20-\x7F]', ''
+                $clean = ($content.ToCharArray() | Where-Object {
+                  $code = [int]$_
+                  $code -ge 32 -or $code -eq 10 -or $code -eq 13
+                }) -join ''
+
                 $clean | Set-Content $file.FullName
 
                 try {
@@ -94,7 +99,6 @@ pipeline {
             Write-Host "=== Copiando historial de Allure (si existe) ==="
 
             if (Test-Path "allure-report/history") {
-              Write-Host "Historial encontrado. Copiando..."
               Copy-Item -Recurse -Force "allure-report/history" "allure-results/history"
             } else {
               Write-Host "No existe historial previo."
@@ -110,31 +114,30 @@ pipeline {
           powershell '''
             Write-Host "=== Preparando backup por fecha ==="
 
-            # Fecha YYYY-MM-DD
             $dateFolder = (Get-Date -Format "yyyy-MM-dd")
 
-            # Crear carpetas raíz si no existen
             if (!(Test-Path "videos_backup")) { New-Item -ItemType Directory -Path "videos_backup" | Out-Null }
             if (!(Test-Path "screenshots_backup")) { New-Item -ItemType Directory -Path "screenshots_backup" | Out-Null }
 
-            # Crear carpetas por fecha
             $videosDatePath = Join-Path "videos_backup" $dateFolder
             $screensDatePath = Join-Path "screenshots_backup" $dateFolder
 
             if (!(Test-Path $videosDatePath)) { New-Item -ItemType Directory -Path $videosDatePath | Out-Null }
             if (!(Test-Path $screensDatePath)) { New-Item -ItemType Directory -Path $screensDatePath | Out-Null }
 
-            Write-Host "=== Copiando SOLO videos raíz (sin subcarpetas) ==="
-            Get-ChildItem "cypress/videos" -File -Include *.mp4 -ErrorAction SilentlyContinue | ForEach-Object {
-              $dest = Join-Path $videosDatePath $_.Name
-              Copy-Item $_.FullName -Destination $dest -Force -ErrorAction SilentlyContinue
-            }
+            Write-Host "=== Copiando SOLO videos raíz ==="
+            Get-ChildItem "cypress/videos" -File -Include *.mp4 -ErrorAction SilentlyContinue |
+              ForEach-Object {
+                $dest = Join-Path $videosDatePath $_.Name
+                Copy-Item $_.FullName -Destination $dest -Force -ErrorAction SilentlyContinue
+              }
 
-            Write-Host "=== Copiando screenshots (todas, recursivo) ==="
-            Get-ChildItem -Recurse "cypress/screenshots" -Include *.png -ErrorAction SilentlyContinue | ForEach-Object {
-              $dest = Join-Path $screensDatePath $_.Name
-              Copy-Item $_.FullName -Destination $dest -Force -ErrorAction SilentlyContinue
-            }
+            Write-Host "=== Copiando screenshots (recursivo) ==="
+            Get-ChildItem -Recurse "cypress/screenshots" -Include *.png -ErrorAction SilentlyContinue |
+              ForEach-Object {
+                $dest = Join-Path $screensDatePath $_.Name
+                Copy-Item $_.FullName -Destination $dest -Force -ErrorAction SilentlyContinue
+              }
 
             Write-Host "=== Backup por fecha completado ==="
           '''
