@@ -1,19 +1,19 @@
 const { defineConfig } = require("cypress");
 const fs = require("fs");
 const path = require("path");
-const { execSync } = require("child_process");
 const allureWriter = require("@shelex/cypress-allure-plugin/writer");
 
 module.exports = defineConfig({
 
   // ============================================================
-  // REPORTER PRINCIPAL: MOCHAWESOME
+  // REPORTER PRINCIPAL: MOCHAWESOME (solo JSON)
   // ============================================================
   reporter: "cypress-mochawesome-reporter",
   reporterOptions: {
     reportDir: "cypress/report",
     charts: true,
-    saveJson: true
+    saveJson: true,     // ← SOLO JSON, sin HTML
+    html: false         // ← IMPORTANTE: NO generar HTML aquí
   },
 
   // ============================================================
@@ -29,7 +29,7 @@ module.exports = defineConfig({
   // ============================================================
   env: {
     allure: true,
-    allureTimezone: "local"   // ← CORRECCIÓN: fuerza a Allure a usar hora local
+    allureTimezone: "local"
   },
 
   retries: {
@@ -43,13 +43,13 @@ module.exports = defineConfig({
     setupNodeEvents(on, config) {
 
       // ============================================================
-      // ACTIVAR ALLURE con timezone local
+      // ACTIVAR ALLURE
       // ============================================================
       allureWriter(on, { ...config, timezone: "local" });
       console.log("🔥 Allure plugin cargado con timezone local");
 
       // ============================================================
-      // ACTIVAR MOCHAWESOME
+      // ACTIVAR MOCHAWESOME (solo JSON)
       // ============================================================
       require("cypress-mochawesome-reporter/plugin")(on);
       console.log("📊 Mochawesome plugin cargado");
@@ -113,84 +113,10 @@ module.exports = defineConfig({
       });
 
       // ============================================================
-      // AFTER:RUN → MERGE MOCHAWESOME + GENERAR HTML + BACKUPS
+      // IMPORTANTE:
+      // SE ELIMINA COMPLETAMENTE EL BLOQUE after:run
+      // PARA EVITAR MERGES INTERNOS Y JSON CORRUPTOS
       // ============================================================
-      on("after:run", () => {
-
-        const reportDir = path.join(__dirname, "cypress/report");
-        const jsonsDir = path.join(reportDir, ".jsons");
-
-        if (!fs.existsSync(jsonsDir)) {
-          fs.mkdirSync(jsonsDir, { recursive: true });
-        }
-
-        // Mover JSONs generados por mochawesome
-        const jsonFiles = fs
-          .readdirSync(reportDir)
-          .filter(f => f.endsWith(".json") && f !== "mochawesome.json");
-
-        jsonFiles.forEach(file => {
-          fs.renameSync(
-            path.join(reportDir, file),
-            path.join(jsonsDir, file)
-          );
-        });
-
-        // MERGE + HTML
-        try {
-          execSync(
-            `npx mochawesome-merge ${jsonsDir}/*.json > ${reportDir}/mochawesome.json`,
-            { stdio: "inherit" }
-          );
-
-          execSync(
-            `npx marge ${reportDir}/mochawesome.json --reportDir ${reportDir} --inline --reportFilename index.html`,
-            { stdio: "inherit" }
-          );
-        } catch (err) {
-          console.error("Error generando mochawesome:", err);
-        }
-
-        // ============================================================
-        // BACKUP DE VIDEOS
-        // ============================================================
-        const videosDir = path.join(__dirname, "cypress/videos");
-        const backupRoot = path.join(__dirname, "videos_backup");
-
-        if (!fs.existsSync(backupRoot)) {
-          fs.mkdirSync(backupRoot, { recursive: true });
-        }
-
-        const today = new Date();
-        const yyyy = today.getFullYear();
-        const mm = String(today.getMonth() + 1).padStart(2, "0");
-        const dd = String(today.getDate()).padStart(2, "0");
-        const dateFolder = `${yyyy}-${mm}-${dd}`;
-
-        const backupDateDir = path.join(backupRoot, dateFolder);
-        if (!fs.existsSync(backupDateDir)) {
-          fs.mkdirSync(backupDateDir, { recursive: true });
-        }
-
-        if (fs.existsSync(videosDir)) {
-          fs.readdirSync(videosDir).forEach(file => {
-            if (file.endsWith(".mp4")) {
-
-              const specName = file.replace(".mp4", "");
-              const specDir = path.join(backupDateDir, specName);
-
-              if (!fs.existsSync(specDir)) {
-                fs.mkdirSync(specDir, { recursive: true });
-              }
-
-              const src = path.join(videosDir, file);
-              const dest = path.join(specDir, file);
-
-              fs.copyFileSync(src, dest);
-            }
-          });
-        }
-      });
 
       return config;
     }
