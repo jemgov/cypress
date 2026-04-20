@@ -28,7 +28,7 @@ jobs:
         run: ls mi-proyecto-cypress/e2e/1-getting-started/PRUEBAS
 
       - name: Run Cypress tests
-        run: npx cypress run --browser chrome --headless --spec e2e/1-getting-started/PRUEBAS/login.cy.js
+        run: npx cypress run --browser chrome --headless --spec cypress/e2e/1-getting-started/PRUEBAS/login.cy.js
         working-directory: mi-proyecto-cypress
 
       - name: Upload Cypress HTML report
