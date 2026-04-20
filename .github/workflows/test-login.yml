@@ -22,31 +22,31 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-        working-directory: cypress/mi-proyecto-cypress
+        working-directory: mi-proyecto-cypress
 
       - name: List all tests in PRUEBAS
-        run: ls cypress/mi-proyecto-cypress/cypress/e2e/1-getting-started/PRUEBAS
+        run: ls mi-proyecto-cypress/cypress/e2e/1-getting-started/PRUEBAS
 
       - name: Run Cypress tests
         run: npx cypress run --browser chrome --headless --spec cypress/e2e/1-getting-started/PRUEBAS/login.cy.js
-        working-directory: cypress/mi-proyecto-cypress
+        working-directory: mi-proyecto-cypress
 
       - name: Upload Cypress HTML report
         uses: actions/upload-artifact@v4
         with:
           name: cypress-report
-          path: cypress/mi-proyecto-cypress/cypress/report/**
+          path: mi-proyecto-cypress/cypress/report/**
 
       - name: Upload Cypress screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: cypress-screenshots
-          path: cypress/mi-proyecto-cypress/cypress/screenshots/**/*.png
+          path: mi-proyecto-cypress/cypress/screenshots/**/*.png
 
       - name: Upload Cypress videos
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: cypress-videos
-          path: cypress/mi-proyecto-cypress/cypress/videos/**/*.mp4
+          path: mi-proyecto-cypress/cypress/videos/**/*.mp4
