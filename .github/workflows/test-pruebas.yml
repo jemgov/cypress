@@ -39,12 +39,12 @@ jobs:
 
       # 5️⃣ Verificar archivos de prueba
       - name: List all tests in PRUEBAS
-        run: dir mi-proyecto-cypress\e2e\1-getting-started\PRUEBAS
+        run: dir mi-proyecto-cypress\cypress\e2e\1-getting-started\PRUEBAS
         shell: powershell
 
       # 6️⃣ Ejecutar todos los tests en PRUEBAS
       - name: Run all Cypress tests in PRUEBAS
-        run: npx cypress run --spec e2e/1-getting-started/PRUEBAS/*.cy.js
+        run: npx cypress run --spec cypress/e2e/1-getting-started/PRUEBAS/*.cy.js
         working-directory: mi-proyecto-cypress
         shell: powershell
 
@@ -53,7 +53,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: cypress-report
-          path: mi-proyecto-cypress\cypress\report\**\*
+          path: mi-proyecto-cypress/cypress/report/**
 
       # 8️⃣ Subir screenshots si existen
       - name: Upload Cypress screenshots
@@ -61,7 +61,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: cypress-screenshots
-          path: mi-proyecto-cypress\cypress\screenshots\**\*.png
+          path: mi-proyecto-cypress/cypress/screenshots/**/*.png
 
       # 9️⃣ Subir videos si existen
       - name: Upload Cypress videos
@@ -69,4 +69,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: cypress-videos
-          path: mi-proyecto-cypress\cypress\videos\**\*.mp4
+          path: mi-proyecto-cypress/cypress/videos/**/*.mp4
