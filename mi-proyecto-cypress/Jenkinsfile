@@ -52,7 +52,7 @@ stage('Limpiar resultados Allure') {
               $code = $LASTEXITCODE
               Write-Host "Cypress terminó con código: $code"
 
-              exit 0
+              exit $code
             '''
           }
         }
