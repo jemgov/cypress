@@ -29,6 +29,18 @@ pipeline {
       }
     }
 
+stage('Limpiar resultados Allure') {
+  steps {
+    dir('mi-proyecto-cypress') {
+      powershell '''
+        if (Test-Path "allure-results") {
+          Remove-Item -Recurse -Force "allure-results"
+        }
+      '''
+    }
+  }
+}
+    
     stage('Ejecutar pruebas Cypress') {
       steps {
         timeout(time: 15, unit: 'MINUTES') {
