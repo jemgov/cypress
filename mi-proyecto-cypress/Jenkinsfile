@@ -158,7 +158,10 @@ pipeline {
 
       junit testResults: 'mi-proyecto-cypress/cypress/results/*.xml', allowEmptyResults: true, keepLongStdio: true
 
-      allure includeProperties: false, jdk: '', results: [[path: 'mi-proyecto-cypress/allure-results']]
+      allure(
+    includeProperties: false,
+    results: [[path: 'mi-proyecto-cypress/allure-results']]
+)
     }
   }
 }
